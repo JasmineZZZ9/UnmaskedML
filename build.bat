@@ -1,1 +1,1 @@
-docker build -t unmasked-dataset .
+docker build -t unmasked-main .

@@ -2,4 +2,4 @@
 Grant Perkins, Tian Yu Fan, Jean Claude Zarate, Mingjie Zeng
 
 ## Requirements
-- Python 3.9
+- Docker
