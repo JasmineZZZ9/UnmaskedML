@@ -13,11 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 import tensorflow as tf
 
-from object_detection.utils import label_map_util
-from object_detection.utils import config_util
-from object_detection.utils import visualization_utils as viz_utils
-from object_detection.utils import colab_utils
-from object_detection.builders import model_builder
+from object_detection import model_lib_v2
 
 
 # dataset needs to be in TFRecord format
@@ -25,15 +21,21 @@ from object_detection.builders import model_builder
 class FasterRCNNTrainer:
     def __init__(self):
         self.model_config = "/model_meta/faster_rcnn_inception_resnet_v2_1024x1024_coco17_tpu-8/pipeline.config"
+        self.model_dir = "/model_meta/faster_rcnn_inception_resnet_v2_1024x1024_coco17_tpu-8/"
+        self.ckpt_dir = "/ckpt"
 
-    def train():
+    def train(self):
+        """
+        Must change values in config file to be accurate before this method works
+        :return:
+        """
         model_lib_v2.eval_continuously(
-            pipeline_config_path=FLAGS.pipeline_config_path,
-            model_dir=FLAGS.model_dir,
-            train_steps=FLAGS.num_train_steps,
-            sample_1_of_n_eval_examples=FLAGS.sample_1_of_n_eval_examples,
-            sample_1_of_n_eval_on_train_examples=(
-                FLAGS.sample_1_of_n_eval_on_train_examples),
-            checkpoint_dir=FLAGS.checkpoint_dir,
-            wait_interval=300, timeout=FLAGS.eval_timeout)
+            pipeline_config_path=self.model_config,
+            model_dir=self.model_dir,
+            train_steps=500,
+            sample_1_of_n_eval_examples=None,
+            sample_1_of_n_eval_on_train_examples=5,
+            checkpoint_dir=self.ckpt_dir,
+            wait_interval=300, timeout=3600)
+
 
