@@ -20,9 +20,9 @@ from object_detection import model_lib_v2
 
 class FasterRCNNTrainer:
     def __init__(self):
-        self.model_config = "/model_meta/faster_rcnn_inception_resnet_v2_1024x1024_coco17_tpu-8/pipeline.config"
+        self.model_config = "/unmasked/data/pipeline.config"
         self.model_dir = "/model_meta/faster_rcnn_inception_resnet_v2_1024x1024_coco17_tpu-8/"
-        self.ckpt_dir = "/ckpt"
+        self.ckpt_dir = "/model_meta/faster_rcnn_inception_resnet_v2_1024x1024_coco17_tpu-8/checkpoint"
 
     def train(self):
         """
