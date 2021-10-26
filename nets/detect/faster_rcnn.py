@@ -1,18 +1,3 @@
-import matplotlib
-import matplotlib.pyplot as plt
-
-import os
-import random
-import io
-import imageio
-import glob
-import scipy.misc
-import numpy as np
-from six import BytesIO
-from PIL import Image, ImageDraw, ImageFont
-
-import tensorflow as tf
-
 from object_detection import model_lib_v2
 
 
