@@ -22,6 +22,11 @@ class ConvolutionalLayer(tf.keras.layers.Layer):
 
 
 class Generator(tf.keras.Model):
+    """
+    First part of the GAN.
+
+    Generates artificial faces
+    """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         filters = 48
@@ -38,6 +43,6 @@ class Generator(tf.keras.Model):
         self.layer_7 = ConvolutionalLayer(4 * filters, 7, stride=1)
         self.layer_8 = ConvolutionalLayer(4 * filters, 7, stride=1)
         self.layer_9 = ConvolutionalLayer(4 * filters, 7, dilation_rate=2)
-        self.layer_1 = ConvolutionalLayer(4 * filters, 7, dilation_rate=4)
-        self.layer_1 = ConvolutionalLayer(4 * filters, 7, dilation_rate=8)
-        self.layer_1 = ConvolutionalLayer(4 * filters, 7, dilation_rate=16)
+        self.layer_10 = ConvolutionalLayer(4 * filters, 7, dilation_rate=4)
+        self.layer_11 = ConvolutionalLayer(4 * filters, 7, dilation_rate=8)
+        self.layer_12 = ConvolutionalLayer(4 * filters, 7, dilation_rate=16)
