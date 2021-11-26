@@ -9,8 +9,8 @@ RUN pip3 install cython # dependency for COCO API
 RUN cd / && \
     mkdir -p /model_meta && \
     cd /model_meta && \
-    wget http://download.tensorflow.org/models/object_detection/tf2/20200711/faster_rcnn_inception_resnet_v2_1024x1024_coco17_tpu-8.tar.gz && \
-    tar xzf faster_rcnn_inception_resnet_v2_1024x1024_coco17_tpu-8.tar.gz
+    wget http://download.tensorflow.org/models/object_detection/tf2/20200711/faster_rcnn_resnet101_v1_640x640_coco17_tpu-8.tar.gz && \
+    tar xzf faster_rcnn_resnet101_v1_640x640_coco17_tpu-8.tar.gz
 
 # download COCO API for evaluation
 RUN git clone --depth 1 https://github.com/cocodataset/cocoapi.git

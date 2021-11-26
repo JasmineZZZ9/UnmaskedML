@@ -6,8 +6,8 @@ from object_detection import model_lib_v2
 class FasterRCNNTrainer:
     def __init__(self):
         self.model_config = "/unmasked/data/pipeline.config"
-        self.model_dir = "/model_meta/faster_rcnn_inception_resnet_v2_1024x1024_coco17_tpu-8/"
-        self.ckpt_dir = "/model_meta/faster_rcnn_inception_resnet_v2_1024x1024_coco17_tpu-8/checkpoint"
+        self.model_dir = "/model_meta/faster_rcnn_resnet101_v1_640x640_coco17_tpu-8/"
+        self.ckpt_dir = "/model_meta/faster_rcnn_resnet101_v1_640x640_coco17_tpu-8/checkpoint"
 
     def train(self):
         """
