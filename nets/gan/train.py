@@ -1,11 +1,14 @@
 import tensorflow as tf
 import pandas as pd
 import time
+import os
 
 from tqdm import tqdm, trange
 from deepfill import *
 from config import *
 from utils import *
+
+from nets.gan.utils import ResizedDataReader
 
 tf.random.set_seed(20)
 tf.config.run_functions_eagerly(True)
@@ -19,8 +22,8 @@ IMG_HEIGHT = img_shape[0]
 IMG_WIDTH = img_shape[1]
 
 # both are unmasked faces
-training_dirs = "./TRAIN"
-testing_dirs = "./TEST"
+training_dirs = "./rs_truth_training"
+testing_dirs = "./rs_truth_test"
 
 # image pre-processing
 def load(img):
@@ -45,16 +48,19 @@ discriminator = Discriminator()
 
 BUFFER_SIZE = 4000
 
-train_dataset = tf.data.Dataset.list_files(training_dirs+'/*.jpg')
-train_dataset = train_dataset.take(10000)
+train_dataset = [ (i, load_image_train(i)) for i in os.listdir(training_dirs) if i.endswith(".jpg")]
+train_dataset = train_dataset.take(10000) # TODO: is this redundant?
+train_dataset = train_dataset.shuffle(BUFFER_SIZE)
+train_dataset, train_dataset_filenames = list(zip(*train_dataset))
+
 train_dataset = train_dataset.map(load_image_train,
                                   num_parallel_calls=tf.data.experimental.AUTOTUNE)
 train_dataset = train_dataset.cache("./CACHED_TRAIN.tmp")
-train_dataset = train_dataset.shuffle(BUFFER_SIZE, reshuffle_each_iteration=True)
 train_dataset = train_dataset.batch(BATCH_SIZE)
 train_dataset = train_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
-test_dataset = tf.data.Dataset.list_files(testing_dirs +'/*.jpg')
+test_dataset = [ (i, load_image_train(i)) for i in os.listdir(training_dirs) if i.endswith(".jpg")]
+test_dataset, test_dataset_filenames = list(zip(*train_dataset))
 test_dataset = test_dataset.map(load_image_train)
 test_dataset = test_dataset.batch(BATCH_SIZE)
 test_dataset = test_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
@@ -110,6 +116,9 @@ def train_step(input, mask):
 
 # fit function
 def fit(train_ds, epochs, test_ds):
+    reader = ResizedDataReader()
+    reader.read_all()
+
     checkpoint.restore(manager.latest_checkpoint)
     if manager.latest_checkpoint:
         g_total, g_hinge, g_l1, d = [], [], [], []
@@ -134,8 +143,15 @@ def fit(train_ds, epochs, test_ds):
         count = len(train_ds)
 	# Train
         " the for loop put a mask for each image "
+        index = 0
         for input_image in tqdm(train_ds):
-            " The create_mask part needs a mask having the same shape as our mask"
+            input_image_filename = train_dataset_filenames[index]
+            # TODO: The create_mask part needs a mask having the same shape as our mask"
+            image_id = input_image_filename.replace('.jpg', '')
+            num_masks = reader.get_num_masks(image_id)
+            for mask_num in range(1, num_masks + 1): # mask_num starts at 1 not 0, so offset by 1
+                xmin, ymin, xmax, ymax = reader.get_mask_coords(image_id, num_masks)
+                # TODO: create bbox feature
             mask = create_mask(FLAGS)
 
             total_gen_loss, gen_hinge_loss, gen_l1_loss, dis_loss = train_step(input_image, mask)
@@ -143,6 +159,7 @@ def fit(train_ds, epochs, test_ds):
             g_hinge_b += gen_hinge_loss
             g_l1_b += gen_l1_loss
             d_b += dis_loss
+            index += 1
         g_total.append(g_total_b/count)
         g_hinge.append(g_hinge_b/count)
         g_l1.append(g_l1_b/count)
