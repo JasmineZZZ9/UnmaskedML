@@ -19,8 +19,8 @@ IMG_HEIGHT = img_shape[0]
 IMG_WIDTH = img_shape[1]
 
 # both are unmasked faces
-training_dirs = "../TRAIN"
-testing_dirs = "../TEST"
+training_dirs = "./TRAIN"
+testing_dirs = "./TEST"
 
 # image pre-processing
 def load(img):
@@ -46,10 +46,10 @@ discriminator = Discriminator()
 BUFFER_SIZE = 4000
 
 train_dataset = tf.data.Dataset.list_files(training_dirs+'/*.jpg')
-train_dataset = train_dataset.take(100000)
+train_dataset = train_dataset.take(10000)
 train_dataset = train_dataset.map(load_image_train,
                                   num_parallel_calls=tf.data.experimental.AUTOTUNE)
-train_dataset = train_dataset.cache("./CACHED_TRAIN_MULTI.tmp")
+train_dataset = train_dataset.cache("./CACHED_TRAIN.tmp")
 train_dataset = train_dataset.shuffle(BUFFER_SIZE, reshuffle_each_iteration=True)
 train_dataset = train_dataset.batch(BATCH_SIZE)
 train_dataset = train_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
@@ -67,7 +67,7 @@ def generator_loss(input, stage1, stage2, neg):
     total_gen_loss = gen_hinge_loss + gen_l1_loss
     return total_gen_loss, gen_hinge_loss, gen_l1_loss
 
-def dicriminator_loss(pos, neg):
+def discriminator_loss(pos, neg):
     hinge_pos = tf.reduce_mean(tf.nn.relu(1.0 - pos))
     hinge_neg = tf.reduce_mean(tf.nn.relu(1.0 + neg))
     return  tf.add(.5 * hinge_pos, .5 * hinge_neg)
@@ -96,7 +96,7 @@ def train_step(input, mask):
     pos, neg = tf.split(pos_neg, 2)
 
     total_gen_loss, gen_hinge_loss, gen_l1_loss = generator_loss(input, stage1, stage2, neg)
-    dis_loss = dicriminator_loss(pos, neg)
+    dis_loss = discriminator_loss(pos, neg)
 
   generator_gradients = gen_tape.gradient(total_gen_loss,
                                           generator.trainable_variables)

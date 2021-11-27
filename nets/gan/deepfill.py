@@ -1,15 +1,23 @@
 import tensorflow as tf
+import numpy as np
+from utils import *
+from config import Config
 
+FLAGS = Config('./inpaint.yml')
+img_shape = FLAGS.img_shapes
+IMG_HEIGHT = img_shape[0]
+IMG_WIDTH = img_shape[1]
 
 class ConvolutionalLayer(tf.keras.layers.Layer):
     def __init__(self, filters, size, stride=1, dilation_rate=1, activation=tf.keras.activations.swish):
+        super(ConvolutionalLayer, self).__init__(name='')
         self.filters = filters
         self.size = size
         self.stride = stride
         self.dilation_rate = dilation_rate
         self.activation = activation
         self.conv_layer = tf.keras.layers.Conv2D(self.filters, self.size, self.stride, padding="same",
-                                                 dilation_rate=self.dilation_rate, activation=self.activation)
+                                                 dilation_rate=self.dilation_rate, activation=None)
 
     def call(self, incoming_tensor, training=False):
         result = self.conv_layer(incoming_tensor)
@@ -18,8 +26,26 @@ class ConvolutionalLayer(tf.keras.layers.Layer):
             return result
 
         result, y = tf.split(result, num_or_size_splits=2, axis=3)
+        result = self.activation(result)
         return self.activation(result) * tf.keras.activations.sigmoid(y)
 
+
+class gen_deconv_block(tf.keras.layers.Layer):
+  def __init__(self, filters, multi=0):
+    super(gen_deconv_block, self).__init__(name='')
+
+    self.multi = multi
+    # ΙΣΩΣ ΜΕ UPSAMPLING;
+    #self.up2d = tf.keras.layers.UpSampling2D((2, 2), interpolation='nearest')
+    self.ConvolutionalLayer = ConvolutionalLayer(filters, 3, 1)
+
+  def call(self, input_tensor, training=False):
+    #x = self.up2d(input_tensor)
+    x = input_tensor
+    if not self.multi:
+        x = resize(x, func='nearest') #otan exo to generatormulticolumn den to thelo
+    x = self.ConvolutionalLayer(x)
+    return x
 
 class Generator(tf.keras.Model):
     """
@@ -48,10 +74,17 @@ class Generator(tf.keras.Model):
         self.coarse_11 = ConvolutionalLayer(filters*4, 3, 1)
         self.coarse_12 = ConvolutionalLayer(filters*4, 3, 1)
         # deconv
-        self.coarse_13 = ConvolutionalLayer(filters*2, 3, 1)
-        self.coarse_14 = ConvolutionalLayer(filters//2, 3, 1)
+        # self.coarse_13 = ConvolutionalLayer(filters*2, 3, 1)
+        # self.coarse_14 = ConvolutionalLayer(filters//2, 3, 1)
+        self.coarse_13 = gen_deconv_block(filters*2)
+        self.coarse_14 = ConvolutionalLayer(filters*2, 3, 1)
+
+
         # deconv
-        self.coarse_15 = ConvolutionalLayer(3, 3, 1, activation=None)
+        # self.coarse_15 = ConvolutionalLayer(3, 3, 1, activation=None)
+        self.coarse_15 = gen_deconv_block(filters)
+        self.coarse_16 = ConvolutionalLayer(filters//2, 3, 1)
+        self.coarse_17 = ConvolutionalLayer(3, 3, 1, activation=tf.keras.activations.tanh)
 
         # Conv Branch
         self.conv_1 = ConvolutionalLayer(filters, 5, 1)
@@ -76,12 +109,23 @@ class Generator(tf.keras.Model):
         self.att_7 = ConvolutionalLayer(filters*4, 3, 1)
         self.att_8 = ConvolutionalLayer(filters*4, 3, 1)
 
+        # combine layer?
+        self.comb_1 = ConvolutionalLayer(filters*4, 3, 1)
+        self.comb_2 = ConvolutionalLayer(filters*4, 3, 1)
+
         # Final Network
-        self.final_1 = ConvolutionalLayer(filters*4, 3, 1)
-        self.final_2 = ConvolutionalLayer(filters*4, 3, 1)
-        self.final_3 = ConvolutionalLayer(filters*2, 3, 1)
-        self.final_4 = ConvolutionalLayer(filters//2, 3, 1)
-        self.final_5 = ConvolutionalLayer(3, 3, 1, activation=None)
+        #self.final_1 = ConvolutionalLayer(filters*4, 3, 1)
+        #self.final_2 = ConvolutionalLayer(filters*4, 3, 1)
+        #self.final_3 = ConvolutionalLayer(filters*2, 3, 1)
+        #self.final_4 = ConvolutionalLayer(filters//2, 3, 1)
+        #self.final_5 = ConvolutionalLayer(3, 3, 1, activation=None)
+
+        self.final_1 = gen_deconv_block(filters * 2)
+        self.final_2 = ConvolutionalLayer(filters * 2, 3, 1)
+        self.final_3 = gen_deconv_block(filters)
+        self.final_4 = ConvolutionalLayer(filters // 2, 3, 1)
+        self.final_5 = ConvolutionalLayer(3, 3, 1, activation=tf.keras.activations.tanh)
+
         # self.layer_1 = ConvolutionalLayer(filters, 7, stride=1)
 
         # self.layer_2 = ConvolutionalLayer(2 * filters, 7, stride=2)
@@ -108,30 +152,43 @@ class Generator(tf.keras.Model):
         Returns:
             [-1, 1] Image with reconstructed faces in masked regions
         """
+        # add
+        xin = x
+        ones_x = tf.ones_like(x)[:, :, :, 0:1]
+        x = tf.concat([x, ones_x, ones_x * mask], axis=3)
+
         # Coarse Network
-        x_coarse = self.coarse_network(x)
+        #x_coarse = self.coarse_network(x)
+        x_coarse, mask_s = self.coarse_network(x, mask)
 
         # Conv Branch
-        x_conv = self.conv_branch(x_coarse)
+        #x_conv = self.conv_branch(x_coarse)
+        x_conv, xnow = self.conv_branch(x_coarse, mask, xin)
 
         # Attention Branch
-        x_att = self.att_branch(x_coarse)
+        #x_att = self.att_branch(x_coarse)
+        x_att, offset_flow = self.att_branch(x_conv, xnow, mask_s)
 
         # Merge Results
         x_merge = tf.concat([x_conv, x_att], axis=3)
 
+        # Combine layers
+        x_combine = self.combine_layer(x_merge)
+
         # Final Network
-        x_final = self.final_network(x_merge)
+        x_final = self.final_network(x_combine)
 
-        return x_final
+        return x_coarse, x_final, offset_flow
 
-    def coarse_network(self, x):
+    def coarse_network(self, x, mask):
         x = self.coarse_1(x)
         x = self.coarse_2(x)
         x = self.coarse_3(x)
         x = self.coarse_4(x)
         x = self.coarse_5(x)
         x = self.coarse_6(x)
+        # add
+        mask_s = resize_mask_like(mask, x)
         x = self.coarse_7(x)
         x = self.coarse_8(x)
         x = self.coarse_9(x)
@@ -141,10 +198,17 @@ class Generator(tf.keras.Model):
         x = self.coarse_13(x)
         x = self.coarse_14(x)
         x = self.coarse_15(x)
-        return x
+        x = self.coarse_16(x)
+        x = self.coarse_17(x)
+        return x, mask_s
 
-    def conv_branch(self, x):
-        x = self.conv_1(x)
+    def conv_branch(self, x, mask, xin):
+        # add
+        x = x * mask + xin[:, :, :, 0:3] * (1. - mask)
+        x.set_shape(xin[:, :, :, 0:3].get_shape().as_list())
+        xnow = x
+
+        x = self.conv_1(xnow)
         x = self.conv_2(x)
         x = self.conv_3(x)
         x = self.conv_4(x)
@@ -154,17 +218,26 @@ class Generator(tf.keras.Model):
         x = self.conv_8(x)
         x = self.conv_9(x)
         x = self.conv_10(x)
-        return x
+        return x, xnow
 
-    def att_branch(self, x):
-        x = self.att_1(x)
+    def att_branch(self, x, xnow, mask_s):
+        x = self.att_1(xnow)
         x = self.att_2(x)
         x = self.att_3(x)
         x = self.att_4(x)
         x = self.att_5(x)
         x = self.att_6(x)
+
+        x, offset_flow = contextual_attention(x, x, mask_s, 3, 1, rate=2)
+
         x = self.att_7(x)
         x = self.att_8(x)
+        return x, offset_flow
+
+    def combine_layer(self, x):
+        x = self.comb_1(x)
+        x = self.comb_2(x)
+        return x
 
     def final_network(self, x):
         x = self.final_1(x)
@@ -172,6 +245,7 @@ class Generator(tf.keras.Model):
         x = self.final_3(x)
         x = self.final_4(x)
         x = self.final_5(x)
+        return x
 
     # def call(self, inputs):
     #     x = self.layer_1(inputs)
@@ -188,14 +262,8 @@ class Generator(tf.keras.Model):
     #     x = self.layer_12(x)
     #     return x
 
-# Spectral-Normalized
 class SpectralNormalization(tf.keras.layers.Wrapper):
-    """
-    implement for spectral-normalized discriminator
-    for SN-PatchGAN loss
-    """
     def __init__(self, layer, iteration=1, eps=1e-12, training=True, **kwargs):
-        self.layer = layer
         self.iteration = iteration
         self.eps = eps
         self.do_power_iteration = training
@@ -254,6 +322,7 @@ class SpectralNormalization(tf.keras.layers.Wrapper):
     def restore_weights(self):
         self.layer.kernel.assign(self.w)
 
+
 class discriminator_SN(tf.keras.layers.Layer):
   def __init__(self, filters, size=5, stride=2):
     super(discriminator_SN, self).__init__(name='')
@@ -272,8 +341,8 @@ class Discriminator(tf.keras.Model):
     Determines whether the input image is real or fake
     """
 
-    def __init__(self):
-        super(Discriminator, self).__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         filter = 64
         #kernel_size = 5
@@ -288,10 +357,10 @@ class Discriminator(tf.keras.Model):
         self.flatten = tf.keras.layers.Flatten()
 
     def call(self, inputs):
-        x = self.sn_conv_1(inputs)
-        x = self.sn_conv_2(inputs)
-        x = self.sn_conv_3(inputs)
-        x = self.sn_conv_4(inputs)
-        x = self.sn_conv_5(inputs)
-        x = self.sn_conv_6(inputs)
+        inputs = self.sn_conv_1(inputs)
+        inputs = self.sn_conv_2(inputs)
+        inputs = self.sn_conv_3(inputs)
+        inputs = self.sn_conv_4(inputs)
+        inputs = self.sn_conv_5(inputs)
+        inputs = self.sn_conv_6(inputs)
         return self.flatten(inputs)

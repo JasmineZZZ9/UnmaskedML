@@ -1,0 +1,10 @@
+g_total,g_hinge,g_l1,d
+"tf.Tensor(1.0887746, shape=(), dtype=float32)","tf.Tensor(-0.0038777122, shape=(), dtype=float32)","tf.Tensor(1.0926523, shape=(), dtype=float32)","tf.Tensor(0.99954766, shape=(), dtype=float32)"
+"tf.Tensor(1.089323, shape=(), dtype=float32)","tf.Tensor(-0.0032283827, shape=(), dtype=float32)","tf.Tensor(1.0925515, shape=(), dtype=float32)","tf.Tensor(0.9998619, shape=(), dtype=float32)"
+"tf.Tensor(1.0902072, shape=(), dtype=float32)","tf.Tensor(-0.0022439046, shape=(), dtype=float32)","tf.Tensor(1.0924511, shape=(), dtype=float32)","tf.Tensor(0.9996623, shape=(), dtype=float32)"
+"tf.Tensor(1.0900447, shape=(), dtype=float32)","tf.Tensor(-0.002305926, shape=(), dtype=float32)","tf.Tensor(1.0923507, shape=(), dtype=float32)","tf.Tensor(0.99986684, shape=(), dtype=float32)"
+"tf.Tensor(1.090192, shape=(), dtype=float32)","tf.Tensor(-0.0020574916, shape=(), dtype=float32)","tf.Tensor(1.0922494, shape=(), dtype=float32)","tf.Tensor(0.9998561, shape=(), dtype=float32)"
+"tf.Tensor(1.0904133, shape=(), dtype=float32)","tf.Tensor(-0.0017349621, shape=(), dtype=float32)","tf.Tensor(1.0921483, shape=(), dtype=float32)","tf.Tensor(0.9997742, shape=(), dtype=float32)"
+"tf.Tensor(1.0901469, shape=(), dtype=float32)","tf.Tensor(-0.0018991937, shape=(), dtype=float32)","tf.Tensor(1.0920461, shape=(), dtype=float32)","tf.Tensor(0.9999149, shape=(), dtype=float32)"
+"tf.Tensor(1.0903423, shape=(), dtype=float32)","tf.Tensor(-0.0016013163, shape=(), dtype=float32)","tf.Tensor(1.0919436, shape=(), dtype=float32)","tf.Tensor(0.9998106, shape=(), dtype=float32)"
+"tf.Tensor(1.0900382, shape=(), dtype=float32)","tf.Tensor(-0.0018021435, shape=(), dtype=float32)","tf.Tensor(1.0918403, shape=(), dtype=float32)","tf.Tensor(0.99994546, shape=(), dtype=float32)"
