@@ -4,6 +4,7 @@ import math
 from PIL import Image, ImageDraw
 from matplotlib import pyplot as plt
 import datetime
+from typing import List
 
 from config import Config
 FLAGS = Config('./inpaint.yml')
@@ -450,3 +451,47 @@ def flow_to_image_tf(flow, name='flow_to_image'):
     img.set_shape(flow.get_shape().as_list()[0:-1]+[3])
     img = img / 127.5 - 1.
     return img
+
+
+class ResizedDataReader():
+    def __init__(self, path='./rs_data.csv'):
+        self.path = path
+        self.lines = []
+        self.headers = []
+        self.data = []
+
+    def read_all(self) -> None:
+        """
+        Run this function to load the data into memory before using other functions
+        :return:
+        """
+        fp = open(self.path, 'r')
+        self.lines = fp.readlines()
+        self.lines = [line.rstrip() for line in self.lines]
+        self.headers = self.lines[0].split(',')
+        self.data = [
+            [
+                row_elems[0], # image_id
+                int(row_elems[1]), # mask_num
+                int(row_elems[2]), # xmin
+                int(row_elems[3]), # ymin
+                int(row_elems[4]), # xmax
+                int(row_elems[5]) # ymax
+            ] for row_elems in [line.split(',') for line in self.lines[1:]]
+        ]
+        fp.close()
+
+    def get_num_masks(self, image_id) -> int:
+        return len([row for row in self.data if row[0] == image_id])
+
+    def get_mask_coords(self, image_id, mask_num) -> List[int]:
+        """
+        Returns [xmin, ymin, xmax, ymax], all values will be -1 if mask info not found
+        :param image_id:
+        :param mask_num:
+        :return:
+        """
+        rows = [row for row in self.data if row[0] == image_id and row[1] == mask_num]
+        if len(rows) != 1:
+            return [-1, -1, -1, -1]
+        return rows[0][2:]
