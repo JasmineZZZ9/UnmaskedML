@@ -34,8 +34,8 @@ def CSV_reader(input):
   input = [i.split('tf.Tensor(')[1].split(', shape')[0] for i in input]
   return tf.strings.to_number(input)
 
-def create_mask(FLAGS):
-  bbox = random_bbox(FLAGS)
+def create_mask(FLAGS, xmin, ymin, xmax, ymax):
+  bbox = scaled_bbox(FLAGS, xmin, ymin, xmax, ymax)
   regular_mask = bbox2mask(FLAGS, bbox, name='mask_c')
 
   irregular_mask = brush_stroke_mask(FLAGS, name='mask_c')
@@ -192,6 +192,26 @@ def contextual_attention(f, b, mask=None, ksize=3, stride=1, rate=1, fuse_k=3, s
     if rate != 1:
         flow = resize(flow, scale=rate, func='bilinear')
     return y, flow
+
+def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax):
+    """
+
+    Returns:
+        tuple: (top, left, height, width)
+
+    """
+    img_shape = FLAGS.img_shapes
+    img_height = img_shape[0]
+    img_width = img_shape[1]
+    vert_scaling_factor = 800 / img_height
+    hor_scaling_factor = 800 / img_width
+
+    return (
+        xmin * hor_scaling_factor,
+        ymin * vert_scaling_factor,
+        (xmax - xmin) * hor_scaling_factor,
+        (ymax - ymin) * vert_scaling_factor
+    )
 
 def random_bbox(FLAGS):
     """Generate a random tlhw.

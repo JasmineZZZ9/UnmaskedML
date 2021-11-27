@@ -140,7 +140,7 @@ def fit(train_ds, epochs, test_ds):
 
         checkpoint.step.assign_add(1)
         g_total_b, g_hinge_b, g_l1_b, d_b = 0, 0, 0, 0
-        count = len(train_ds)
+        count = 0 # len(train_ds)
 	# Train
         " the for loop put a mask for each image "
         index = 0
@@ -151,14 +151,14 @@ def fit(train_ds, epochs, test_ds):
             num_masks = reader.get_num_masks(image_id)
             for mask_num in range(1, num_masks + 1): # mask_num starts at 1 not 0, so offset by 1
                 xmin, ymin, xmax, ymax = reader.get_mask_coords(image_id, num_masks)
-                # TODO: create bbox feature
-            mask = create_mask(FLAGS)
+                mask = create_mask(FLAGS, xmin, ymin, xmax, ymax)
 
-            total_gen_loss, gen_hinge_loss, gen_l1_loss, dis_loss = train_step(input_image, mask)
-            g_total_b += total_gen_loss
-            g_hinge_b += gen_hinge_loss
-            g_l1_b += gen_l1_loss
-            d_b += dis_loss
+                total_gen_loss, gen_hinge_loss, gen_l1_loss, dis_loss = train_step(input_image, mask)
+                g_total_b += total_gen_loss
+                g_hinge_b += gen_hinge_loss
+                g_l1_b += gen_l1_loss
+                d_b += dis_loss
+                count += 1 # verify
             index += 1
         g_total.append(g_total_b/count)
         g_hinge.append(g_hinge_b/count)
