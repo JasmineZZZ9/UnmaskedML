@@ -699,7 +699,7 @@ def train_loop(
           for key, val in logged_dict.items():
             tf.compat.v2.summary.scalar(key, val, step=global_step)
 
-          if step - logged_step >= 200:
+          if step - logged_step >= 100:
             logged_dict_np = {name: value.numpy() for name, value in
                               logged_dict.items()}
             print(
