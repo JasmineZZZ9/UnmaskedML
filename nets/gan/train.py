@@ -23,7 +23,7 @@ IMG_WIDTH = img_shape[1]
 
 # both are unmasked faces
 training_dirs = "./rs_truth_training"
-testing_dirs = "./rs_truth_test"
+testing_dirs = "./rs_masked_test"
 
 # image pre-processing
 def load(img):
@@ -64,6 +64,74 @@ test_dataset, test_dataset_filenames = list(zip(*train_dataset))
 test_dataset = test_dataset.map(load_image_train)
 test_dataset = test_dataset.batch(BATCH_SIZE)
 test_dataset = test_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+
+"modify 1st"
+#train_dataset = [ (i, load_image_train(training_dirs+'/'+i)) for i in os.listdir(training_dirs) if i.endswith(".jpg")]
+#train_dataset, train_dataset_filenames = list(zip(*train_dataset))
+#print(type(train_dataset_filenames))
+#print(train_dataset_filenames[0])
+#print(type(train_dataset))
+#print(train_dataset)
+#train_dataset = tf.data.Dataset.from_tensor_slices((train_dataset, train_dataset_filenames))
+#train_dataset = tf.convert_to_tensor(train_dataset)
+#train_dataset = train_dataset.take(10000) # TODO: is this redundant?
+#train_dataset = train_dataset.shuffle(BUFFER_SIZE)
+
+#test_dataset = [ (i, load_image_train(testing_dirs+'/'+i)) for i in os.listdir(testing_dirs) if i.endswith(".jpg")]
+#test_dataset, test_dataset_filenames = list(zip(*test_dataset))
+#train_dataset = tf.convert_to_tensor(train_dataset)
+#test_dataset = test_dataset.map(load_image_train)
+#test_dataset = test_dataset.batch(BATCH_SIZE)
+#test_dataset = test_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+
+"modyft 2nd"
+#training_path = [training_dirs+'/'+i for i in os.listdir(training_dirs) if i.endswith(".jpg")]
+#training_path_ds = tf.data.Dataset.from_tensor_slices(training_path)
+#AUTOTUNE = tf.data.experimental.AUTOTUNE
+#training_image_ds = training_path_ds.map(load_image_train,
+#                                num_parallel_calls=AUTOTUNE)
+#training_filename = [i[:-4] for i in os.listdir(training_dirs) if i.endswith(".jpg")]
+#training_filename_ds = tf.data.Dataset.from_tensor_slices(training_filename)
+
+#training_image_filename_ds = tf.data.Dataset.zip((training_image_ds, training_filename_ds))
+
+#training_image_filename_ds = training_image_filename_ds.cache("./CACHED_TRAIN.tmp")
+#training_image_filename_ds = training_image_filename_ds.shuffle(BUFFER_SIZE, reshuffle_each_iteration=True)
+#training_image_filename_ds = training_image_filename_ds.batch(BATCH_SIZE)
+#training_image_filename_ds = training_image_filename_ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+
+#for data in training_image_filename_ds.take(1):
+#    print(type(data))
+
+#print("type of training_image_filename_ds:", type(training_image_filename_ds))
+#print("training_image_filename_ds:", training_image_filename_ds)
+
+#import pandas as pd
+#train_pd = pd.DataFrame(training_image_filename_ds, columns=['image', 'name'])
+#print(train_pd.head())
+#print(train_pd.shape)
+
+#for item in training_image_filename_ds:
+#    print("type of item:", type(item))
+#    print("item:", item)
+#    print("type of item:", type(item[0]))
+#    print("item[0]:", item[0])
+#    print("type of item:", type(item[1]))
+#    print("item[1]:", item[1])
+
+# testing_path = [testing_dirs+'/'+i for i in os.listdir(testing_dirs) if i.endswith(".jpg")]
+# testing_path_ds = tf.data.Dataset.from_tensor_slices(testing_path)
+# testing_image_ds = testing_path_ds.map(load_image_train)
+# testing_filename = [i[:-4] for i in os.listdir(testing_dirs) if i.endswith(".jpg")]
+# testing_filename_ds = tf.data.Dataset.from_tensor_slices(testing_filename)
+#
+# testing_image_filename_ds = tf.data.Dataset.zip((testing_image_ds, testing_filename_ds))
+#
+# testing_image_filename_ds = testing_image_filename_ds.batch(BATCH_SIZE)
+# testing_image_filename_ds = testing_image_filename_ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+#
+# print("type of testing_image_filename_ds:", type(training_image_filename_ds))
+# print("testing_image_filename_ds:", training_image_filename_ds)
 
 # loss
 def generator_loss(input, stage1, stage2, neg):
@@ -178,7 +246,16 @@ def fit(train_ds, epochs, test_ds):
 
 
         for input in test_ds.take(1):
-            generate_images(input, generator=generator, num_epoch=check_step)
+            input_filename = test_dataset_filenames[index]
+            # TODO: The create_mask part needs a mask having the same shape as our mask"
+            image_id = input_filename.replace('.jpg', '')
+            num_masks = reader.get_num_masks(image_id)
+            for mask_num in range(1, num_masks + 1):  # mask_num starts at 1 not 0, so offset by 1
+                xmin, ymin, xmax, ymax = reader.get_mask_coords(image_id, num_masks)
+                mask = create_mask(FLAGS, xmin, ymin, xmax, ymax)
+
+                generate_images(input, generator=generator, num_epoch=check_step, mask=mask)
+
         print("Epoch: ", check_step)
 
         if check_step % 10 == 0:

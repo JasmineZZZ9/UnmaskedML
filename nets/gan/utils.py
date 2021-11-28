@@ -38,21 +38,21 @@ def create_mask(FLAGS, xmin, ymin, xmax, ymax):
   bbox = scaled_bbox(FLAGS, xmin, ymin, xmax, ymax)
   regular_mask = bbox2mask(FLAGS, bbox, name='mask_c')
 
-  irregular_mask = brush_stroke_mask(FLAGS, name='mask_c')
+  #irregular_mask = brush_stroke_mask(FLAGS, name='mask_c')
   mask = tf.cast(
     tf.math.logical_or(
-      tf.cast(irregular_mask, tf.bool),
+      tf.cast(regular_mask, tf.bool),
       tf.cast(regular_mask, tf.bool),
     ),
     tf.float32
   )
   return mask
 
-def generate_images(input, generator, training=True, url=False, num_epoch=0):
+def generate_images(input, generator, mask, training=True, url=False, num_epoch=0):
   #input = original 
   #batch_incomplete = original+mask
   #stage2 = prediction/inpainted image
-  mask = create_mask(FLAGS)
+  #mask = create_mask(FLAGS)
   batch_incomplete = input*(1.-mask)
   stage1, stage2, offset_flow = generator(batch_incomplete, mask, training=training)
 
