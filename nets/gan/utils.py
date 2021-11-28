@@ -493,10 +493,10 @@ class ResizedDataReader():
             [
                 row_elems[0], # image_id
                 int(row_elems[1]), # mask_num
-                int(row_elems[2]), # xmin
-                int(row_elems[3]), # ymin
-                int(row_elems[4]), # xmax
-                int(row_elems[5]) # ymax
+                max(0, int(row_elems[2])), # xmin
+                max(0, int(row_elems[3])), # ymin
+                min(800, int(row_elems[4])), # xmax
+                min(800, int(row_elems[5])) # ymax
             ] for row_elems in [line.split(',') for line in self.lines[1:]]
         ]
         fp.close()
