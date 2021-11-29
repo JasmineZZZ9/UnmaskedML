@@ -67,7 +67,7 @@ import time
 from object_detection.utils import label_map_util
 from object_detection.utils import visualization_utils as viz_utils
 
-PATH_TO_SAVED_MODEL = "../../data/export5" + "/saved_model"
+PATH_TO_SAVED_MODEL = "../../data/export1" + "/saved_model"
 
 print('Loading model...', end='')
 start_time = time.time()
@@ -163,25 +163,17 @@ for image_path in ["../../data/test.jpg"]:
     image_np_with_detections = image_np.copy()
     print("Starting")
     print(detections['detection_scores'])
-    dets = []
-    for i in range(len(detections['detection_boxes'])):
-    	dets.append([detections['detection_boxes'][i], detections['detection_classes'][i], detections['detection_scores'][i]])
-    dets.sort(key=lambda i:i[2])
-    dets = dets[:5]
-    boxes = np.array([i[0] for i in dets])
-    classes = np.array([i[1] for i in dets])
-    scores = np.array([i[2] for i in dets])
     
 
     viz_utils.visualize_boxes_and_labels_on_image_array(
           image_np_with_detections,
-          boxes,
-          classes,
-          scores,
+          detections['detection_boxes'],
+          detections['detection_classes'],
+          detections['detection_scores'],
           category_index,
           use_normalized_coordinates=True,
           max_boxes_to_draw=200,
-          min_score_thresh=0,
+          min_score_thresh=.3,
           agnostic_mode=False)
 
     plt.figure()

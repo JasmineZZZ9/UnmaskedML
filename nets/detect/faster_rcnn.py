@@ -16,8 +16,8 @@ class FasterRCNNTrainer:
         model_lib_v2_test.train_loop(
             pipeline_config_path=self.model_config,
             model_dir=self.ckpt_dir,
-            train_steps=2500,
-            checkpoint_every_n=100,
+            train_steps=25000,
+            checkpoint_every_n=200,
             checkpoint_max_to_keep=250)
 
     def evaluate(self):
