@@ -247,7 +247,7 @@ print("Continue Training from epoch ", np.int(checkpoint.step))
 
 # FIT
 #EPOCHS = 200 - np.int(checkpoint.step)
-EPOCHS = 200
+EPOCHS = 20000
 
 # fit(train_dataset.take(20), EPOCHS, test_dataset)
 fit(train_dataset, EPOCHS, test_dataset)
