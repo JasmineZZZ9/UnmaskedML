@@ -22,8 +22,8 @@ IMG_HEIGHT = img_shape[0]
 IMG_WIDTH = img_shape[1]
 
 # both are unmasked faces
-training_dirs = "./rs_truth_training"
-testing_dirs = "./rs_masked_test"
+training_dirs = "./TRAIN"
+testing_dirs = "./TEST"
 
 # image pre-processing
 def load(img):
@@ -215,11 +215,23 @@ def fit(train_ds, epochs, test_ds):
         for input_image in tqdm(train_ds):
             input_image_filename = train_dataset_filenames[index]
             # TODO: The create_mask part needs a mask having the same shape as our mask"
-            image_id = input_image_filename.replace('.jpg', '')
+            image_id = input_image_filename
             num_masks = reader.get_num_masks(image_id)
+<<<<<<< Updated upstream
             for mask_num in range(1, num_masks + 1): # mask_num starts at 1 not 0, so offset by 1
                 xmin, ymin, xmax, ymax = reader.get_mask_coords(image_id, num_masks)
                 mask = create_mask(FLAGS, xmin, ymin, xmax, ymax)
+=======
+            # mask_num starts at 1 not 0, so offset by 1
+            for mask_num in range(1, num_masks + 1):
+                xmin, ymin, xmax, ymax = reader.get_mask_coords(
+                    image_id, num_masks)
+                # print(image_id)
+                # print("xmin: " + str(xmin) + " ymin: " + str(ymin) +
+                #       " xmax: " + str(xmax) + " ymax: " + str(ymax))
+                oheight, owidth = reader.get_image_hw(image_id)
+                mask = create_mask(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth)
+>>>>>>> Stashed changes
 
                 total_gen_loss, gen_hinge_loss, gen_l1_loss, dis_loss = train_step(input_image, mask)
                 g_total_b += total_gen_loss
@@ -248,6 +260,7 @@ def fit(train_ds, epochs, test_ds):
         for input in test_ds.take(1):
             input_filename = test_dataset_filenames[index]
             # TODO: The create_mask part needs a mask having the same shape as our mask"
+<<<<<<< Updated upstream
             image_id = input_filename.replace('.jpg', '')
             num_masks = reader.get_num_masks(image_id)
             for mask_num in range(1, num_masks + 1):  # mask_num starts at 1 not 0, so offset by 1
@@ -255,6 +268,22 @@ def fit(train_ds, epochs, test_ds):
                 mask = create_mask(FLAGS, xmin, ymin, xmax, ymax)
 
                 generate_images(input, generator=generator, num_epoch=check_step, mask=mask)
+=======
+            image_id = input_filename.replace('_surgical.jpg', '.jpg')
+            # print("Image ID: " + str(image_id))
+            num_masks = reader.get_num_masks(image_id)
+            # mask_num starts at 1 not 0, so offset by 1
+            # print("Num Masks: " + str(num_masks))
+            index += 1
+            for mask_num in range(1, num_masks + 1):
+                xmin, ymin, xmax, ymax = reader.get_mask_coords(
+                    image_id, mask_num)
+                oheight, owidth = reader.get_image_hw(image_id)
+
+                mask = create_mask(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth)
+                generate_images(input["img"], generator=generator,
+                                num_epoch=check_step, mask=mask)
+>>>>>>> Stashed changes
 
         print("Epoch: ", check_step)
 

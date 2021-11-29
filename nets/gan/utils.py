@@ -34,6 +34,7 @@ def CSV_reader(input):
   input = [i.split('tf.Tensor(')[1].split(', shape')[0] for i in input]
   return tf.strings.to_number(input)
 
+<<<<<<< Updated upstream
 def create_mask(FLAGS, xmin, ymin, xmax, ymax):
   bbox = scaled_bbox(FLAGS, xmin, ymin, xmax, ymax)
   regular_mask = bbox2mask(FLAGS, bbox, name='mask_c')
@@ -47,6 +48,23 @@ def create_mask(FLAGS, xmin, ymin, xmax, ymax):
     tf.float32
   )
   return mask
+=======
+def create_mask(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
+    #bbox = scaled_bbox(FLAGS, xmin, ymin, xmax, ymax)
+    bbox = scaled_bbox(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth)
+    regular_mask = bbox2mask(FLAGS, bbox, name='mask_c')
+
+    # irregular_mask = brush_stroke_mask(FLAGS, name='mask_c')
+    mask = tf.cast(
+        tf.math.logical_or(
+            tf.cast(regular_mask, tf.bool),
+            tf.cast(regular_mask, tf.bool),
+        ),
+        tf.float32
+    )
+    return mask
+
+>>>>>>> Stashed changes
 
 def generate_images(input, generator, mask, training=True, url=False, num_epoch=0):
   #input = original 
@@ -193,7 +211,12 @@ def contextual_attention(f, b, mask=None, ksize=3, stride=1, rate=1, fuse_k=3, s
         flow = resize(flow, scale=rate, func='bilinear')
     return y, flow
 
+<<<<<<< Updated upstream
 def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax):
+=======
+
+def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
+>>>>>>> Stashed changes
     """
 
     Returns:
@@ -203,6 +226,7 @@ def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax):
     img_shape = FLAGS.img_shapes
     img_height = img_shape[0]
     img_width = img_shape[1]
+<<<<<<< Updated upstream
     vert_scaling_factor = 800 / img_height
     hor_scaling_factor = 800 / img_width
 
@@ -212,6 +236,20 @@ def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax):
         (xmax - xmin) * hor_scaling_factor,
         (ymax - ymin) * vert_scaling_factor
     )
+=======
+
+
+    vert_scaling_factor = img_height / oheight
+    hor_scaling_factor = img_width / owidth
+
+    t = ymin * vert_scaling_factor
+    l = xmin * hor_scaling_factor
+    h = (ymax - ymin) * vert_scaling_factor
+    w = (xmax - xmin) * hor_scaling_factor
+
+    return (t, l, h, w)
+
+>>>>>>> Stashed changes
 
 def random_bbox(FLAGS):
     """Generate a random tlhw.
@@ -474,7 +512,7 @@ def flow_to_image_tf(flow, name='flow_to_image'):
 
 
 class ResizedDataReader():
-    def __init__(self, path='./rs_data.csv'):
+    def __init__(self, path='./mask.csv'):
         self.path = path
         self.lines = []
         self.headers = []
@@ -491,12 +529,23 @@ class ResizedDataReader():
         self.headers = self.lines[0].split(',')
         self.data = [
             [
+<<<<<<< Updated upstream
                 row_elems[0], # image_id
                 int(row_elems[1]), # mask_num
                 max(0, int(row_elems[2])), # xmin
                 max(0, int(row_elems[3])), # ymin
                 min(800, int(row_elems[4])), # xmax
                 min(800, int(row_elems[5])) # ymax
+=======
+                row_elems[0],  # image_id
+                int(row_elems[1]),  # mask_num
+                int(row_elems[2]),  # image_height
+                int(row_elems[3]),  # image_width
+                max(0, int(row_elems[8])),  # xmin
+                max(0, int(row_elems[11])),  # ymin
+                min(800, int(row_elems[12])),  # xmax
+                min(800, int(row_elems[17]))  # ymax
+>>>>>>> Stashed changes
             ] for row_elems in [line.split(',') for line in self.lines[1:]]
         ]
         fp.close()
@@ -514,4 +563,18 @@ class ResizedDataReader():
         rows = [row for row in self.data if row[0] == image_id and row[1] == mask_num]
         if len(rows) != 1:
             return [-1, -1, -1, -1]
-        return rows[0][2:]
+        return rows[0][4:]
+
+    def get_image_hw(self, image_id) -> List[int]:
+        """
+        Returns [xmin, ymin, xmax, ymax], all values will be -1 if mask info not found
+        :param image_id:
+        :param mask_num:
+        :return:
+        """
+        #print("mask num check:", mask_num)
+        rows = [row for row in self.data if row[0] == image_id and row[1] == 1]
+
+        if len(rows) != 1:
+            return [-1, -1, -1, -1]
+        return rows[0][2:4]
