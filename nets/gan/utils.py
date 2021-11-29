@@ -572,7 +572,12 @@ class ResizedDataReader():
         fp.close()
 
     def get_num_masks(self, image_id) -> int:
-        return len([row for row in self.data if row[0] == image_id])
+        rows = [row for row in self.data if row[0] == image_id]
+
+        if len(rows) == 0:
+            return False
+
+        return len(rows)
 
     def get_mask_coords(self, image_id, mask_num) -> List[int]:
         """
@@ -584,7 +589,7 @@ class ResizedDataReader():
         rows = [row for row in self.data if row[0]
                 == image_id and row[1] == mask_num]
         if len(rows) != 1:
-            return [-1, -1, -1, -1]
+            return False
         return rows[0][4:]
 
     def get_image_hw(self, image_id) -> List[int]:
@@ -599,5 +604,5 @@ class ResizedDataReader():
 
         #print("row:", rows)
         if len(rows) != 1:
-            return [-1, -1, -1, -1]
+            return False
         return rows[0][2:4]

@@ -166,14 +166,26 @@ def fit(train_ds, epochs, test_ds):
             # TODO: The create_mask part needs a mask having the same shape as our mask"
             #image_id = input_image_filename.replace('.jpg', '')
             image_id = input_image_filename
+            if reader.get_num_masks(image_id) == False:
+                continue
             num_masks = reader.get_num_masks(image_id)
             # mask_num starts at 1 not 0, so offset by 1
             for mask_num in range(1, num_masks + 1):
+                if reader.get_mask_coords(image_id, num_masks) == False:
+                    continue
+                if reader.get_image_hw(image_id) == False:
+                    continue
                 xmin, ymin, xmax, ymax = reader.get_mask_coords(
                     image_id, num_masks)
                 oheight, owidth = reader.get_image_hw(image_id)
 
                 mask = create_mask(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth)
+                if mask.shape != (1, 64, 64, 1):
+                    count += 1
+                    continue
+                if input_image['img'].shape != (1, 64, 64, 3):
+                    count += 1
+                    continue
 
                 total_gen_loss, gen_hinge_loss, gen_l1_loss, dis_loss = train_step(
                     input_image, mask)
@@ -206,11 +218,17 @@ def fit(train_ds, epochs, test_ds):
             #image_id = input_filename.replace('_surgical.jpg', '')
             image_id = input_filename.replace('_surgical.jpg', '.jpg')
             #print("Image ID: " + str(image_id))
+            if reader.get_num_masks(image_id)==False:
+                continue
             num_masks = reader.get_num_masks(image_id)
             # mask_num starts at 1 not 0, so offset by 1
             #print("Num Masks: " + str(num_masks))
             index += 1
             for mask_num in range(1, num_masks + 1):
+                if reader.get_mask_coords(image_id, num_masks) == False:
+                    continue
+                if reader.get_image_hw(image_id) == False:
+                    continue
 
                 xmin, ymin, xmax, ymax = reader.get_mask_coords(
                     image_id, num_masks)
