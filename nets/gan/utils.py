@@ -12,49 +12,34 @@ img_shape = FLAGS.img_shapes
 IMG_HEIGHT = img_shape[0]
 IMG_WIDTH = img_shape[1]
 
+
 def load(img):
-  img = tf.io.read_file(img)
-  img = tf.image.decode_jpeg(img)
-  return tf.cast(img, tf.float32)
+    img = tf.io.read_file(img)
+    img = tf.image.decode_jpeg(img)
+    return tf.cast(img, tf.float32)
+
 
 def normalize(img):
-  return (img/127.5) - 1.
+    return (img/127.5) - 1.
+
 
 def load_image_train(img):
-  img = load(img)
-  img = resize_pipeline(img, IMG_HEIGHT, IMG_WIDTH)
-  return normalize(img)
+    img = load(img)
+    img = resize_pipeline(img, IMG_HEIGHT, IMG_WIDTH)
+    return normalize(img)
+
 
 def resize_pipeline(img, height, width):
-  return tf.image.resize(img, [height, width],
-                         method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    return tf.image.resize(img, [height, width],
+                           method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+
 
 def CSV_reader(input):
-  import re
-  input = [i.split('tf.Tensor(')[1].split(', shape')[0] for i in input]
-  return tf.strings.to_number(input)
+    import re
+    input = [i.split('tf.Tensor(')[1].split(', shape')[0] for i in input]
+    return tf.strings.to_number(input)
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-def create_mask(FLAGS, xmin, ymin, xmax, ymax):
-  bbox = scaled_bbox(FLAGS, xmin, ymin, xmax, ymax)
-  regular_mask = bbox2mask(FLAGS, bbox, name='mask_c')
 
-  #irregular_mask = brush_stroke_mask(FLAGS, name='mask_c')
-  mask = tf.cast(
-    tf.math.logical_or(
-      tf.cast(regular_mask, tf.bool),
-      tf.cast(regular_mask, tf.bool),
-    ),
-    tf.float32
-  )
-  return mask
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 def create_mask(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
     #bbox = scaled_bbox(FLAGS, xmin, ymin, xmax, ymax)
     bbox = scaled_bbox(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth)
@@ -70,40 +55,48 @@ def create_mask(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
     )
     return mask
 
->>>>>>> Stashed changes
 
 def generate_images(input, generator, mask, training=True, url=False, num_epoch=0):
-  #input = original 
-  #batch_incomplete = original+mask
-  #stage2 = prediction/inpainted image
-  #mask = create_mask(FLAGS)
-  batch_incomplete = input*(1.-mask)
-  stage1, stage2, offset_flow = generator(batch_incomplete, mask, training=training)
+    # input = original
+    # batch_incomplete = original+mask
+    # stage2 = prediction/inpainted image
+    # mask = create_mask(FLAGS)
+    # tf.print(mask, summarize=-1)
 
-  plt.figure(figsize=(30,30))
+    batch_incomplete = input*(1.-mask)
+    stage1, stage2, offset_flow = generator(
+        batch_incomplete, mask, training=training)
 
-  batch_predict = stage2
-  batch_complete = batch_predict*mask + batch_incomplete*(1-mask)
+    plt.figure(figsize=(30, 30))
 
-  display_list = [input[0], batch_incomplete[0], batch_complete[0], offset_flow[0]]
-  title = ['Input Image', 'Input With Mask', 'Inpainted Image', 'Offset Flow']
-  if not url:
-    for i in range(4):
-      plt.subplot(1, 4, i+1)
-      title_obj = plt.title(title[i])
-      plt.setp(title_obj, color='y')         #set the color of title to red
-      plt.axis('off')
-      # getting the pixel values between [0, 1] to plot it.
-      plt.imshow(display_list[i]*0.5 + 0.5)
-    if training:
-      plt.savefig(f"./images_examples/test_example_{num_epoch}.png")
+    batch_predict = stage2
+    batch_complete = batch_predict*mask + batch_incomplete*(1-mask)
+
+    display_list = [input, batch_incomplete[0],
+                    batch_complete[0], offset_flow[0]]
+    title = ['Input Image', 'Input With Mask',
+             'Inpainted Image', 'Offset Flow']
+    if not url:
+        for i in range(4):
+            plt.subplot(1, 4, i+1)
+            title_obj = plt.title(title[i])
+            plt.setp(title_obj, color='y')  # set the color of title to red
+            plt.axis('off')
+            # getting the pixel values between [0, 1] to plot it.
+            plt.imshow(display_list[i]*0.5 + 0.5)
+        if training:
+            # print(
+            #     "REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+            plt.savefig(f"./images_examples/test_example_{num_epoch}.png")
+        else:
+            plt.savefig(
+                f"./images_examples/infer_test_example_{num_epoch}__" + datetime.datetime.now().strftime("%H%M%S%f") + ".png")
     else:
-      plt.savefig(f"./images_examples/infer_test_example_{num_epoch}__" +datetime.datetime.now().strftime("%H%M%S%f")+ ".png")
-  else:
-    return batch_incomplete[0], batch_complete[0]
+        return batch_incomplete[0], batch_complete[0]
+
 
 def plot_history(g_total_h, g_hinge_h, g_l1_h, d_h, num_epoch, training=True):
-    plt.figure(figsize=(20,10)) 
+    plt.figure(figsize=(20, 10))
     plt.subplot(4, 1, 1)
     plt.plot(g_total_h, label='total_gen_loss')
     plt.legend()
@@ -118,87 +111,98 @@ def plot_history(g_total_h, g_hinge_h, g_l1_h, d_h, num_epoch, training=True):
     plt.legend()
     # save plot to file
     if training:
-      plt.savefig(f"./images_loss/plot_loss_{num_epoch}.png")
+        plt.savefig(f"./images_loss/plot_loss_{num_epoch}.png")
     else:
-      plt.savefig(f"./images_loss/infer_plot_loss_{num_epoch}.png")
+        plt.savefig(f"./images_loss/infer_plot_loss_{num_epoch}.png")
     plt.clf()
     plt.close()
 
-#COMPUTATIONS
+# COMPUTATIONS
+
+
 def contextual_attention(f, b, mask=None, ksize=3, stride=1, rate=1, fuse_k=3, softmax_scale=10., training=True, fuse=True):
-  
+
     raw_fs = tf.shape(f)
     raw_int_fs = f.get_shape().as_list()
     raw_int_bs = b.get_shape().as_list()
-    #raw_int_fs[0] = 1
-    #raw_int_bs[0] = 1
-    #print("raw_int_bs" , raw_int_bs)
+    # raw_int_fs[0] = 1
+    # raw_int_bs[0] = 1
+    # print("raw_int_bs" , raw_int_bs)
     kernel = 2*rate
     raw_w = tf.image.extract_patches(
-            b, [1,kernel,kernel,1], [1,rate*stride,rate*stride,1], [1,1,1,1], padding='SAME')
-    raw_w = tf.reshape(raw_w, [raw_int_bs[0], -1, kernel, kernel, raw_int_bs[3]])
+        b, [1, kernel, kernel, 1], [1, rate*stride, rate*stride, 1], [1, 1, 1, 1], padding='SAME')
+    raw_w = tf.reshape(
+        raw_w, [raw_int_bs[0], -1, kernel, kernel, raw_int_bs[3]])
     raw_w = tf.transpose(raw_w, [0, 2, 3, 4, 1])
     f = resize(f, scale=1./rate, func='nearest')
-    b = resize(b, to_shape=[int(raw_int_bs[1]/rate), int(raw_int_bs[2]/rate)], func='nearest')  # https://github.com/tensorflow/tensorflow/issues/11651
-    if mask is not None: 
+
+    b = resize(b, to_shape=[int(raw_int_bs[1]/rate),
+                            int(raw_int_bs[2]/rate)], func='nearest')
+    if mask is not None:
         mask = resize(mask, scale=1./rate, func='nearest')
     fs = tf.shape(f)
     int_fs = f.get_shape().as_list()
-    #int_fs[0] = 1
+    # int_fs[0] = 1
     f_groups = tf.split(f, int_fs[0], axis=0)
     # from t(H*W*C) to w(b*k*k*c*h*w)
     bs = tf.shape(b)
     int_bs = b.get_shape().as_list()
-    #int_bs[0] = 1
+    # int_bs[0] = 1
     w = tf.image.extract_patches(
-        b, [1,ksize,ksize,1], [1,stride,stride,1], [1,1,1,1], padding='SAME')
+        b, [1, ksize, ksize, 1], [1, stride, stride, 1], [1, 1, 1, 1], padding='SAME')
     w = tf.reshape(w, [int_fs[0], -1, ksize, ksize, int_fs[3]])
     w = tf.transpose(w, [0, 2, 3, 4, 1])  # transpose to b*k*k*c*hw
     # process mask
     if mask is None:
         mask = tf.zeros([1, bs[1], bs[2], 1])
     m = tf.image.extract_patches(
-        mask, [1,ksize,ksize,1], [1,stride,stride,1], [1,1,1,1], padding='SAME')
+        mask, [1, ksize, ksize, 1], [1, stride, stride, 1], [1, 1, 1, 1], padding='SAME')
     m = tf.reshape(m, [1, -1, ksize, ksize, 1])
     m = tf.transpose(m, [0, 2, 3, 4, 1])  # transpose to b*k*k*c*hw
     m = m[0]
-    mm = tf.cast(tf.math.equal(tf.math.reduce_mean(m, axis=[0,1,2], keepdims=True), 0.), tf.float32)
+    mm = tf.cast(tf.math.equal(tf.math.reduce_mean(
+        m, axis=[0, 1, 2], keepdims=True), 0.), tf.float32)
     w_groups = tf.split(w, int_bs[0], axis=0)
     raw_w_groups = tf.split(raw_w, int_bs[0], axis=0)
     y = []
     offsets = []
     scale = softmax_scale
-    k=fuse_k
+    k = fuse_k
     fuse_weight = tf.reshape(tf.eye(k), [k, k, 1, 1])
     for xi, wi, raw_wi in zip(f_groups, w_groups, raw_w_groups):
         # conv for compare
         wi = wi[0]
-        wi_normed = wi / tf.math.maximum(tf.math.sqrt(tf.math.reduce_sum (tf.math.square(wi), axis=[0,1,2])), 1e-4)
-        yi = tf.nn.conv2d(xi, wi_normed, strides=[1,1,1,1], padding="SAME")
-  
+        wi_normed = wi / \
+            tf.math.maximum(tf.math.sqrt(tf.math.reduce_sum(
+                tf.math.square(wi), axis=[0, 1, 2])), 1e-4)
+        yi = tf.nn.conv2d(xi, wi_normed, strides=[1, 1, 1, 1], padding="SAME")
+
         # conv implementation for fuse scores to encourage large patches
         if fuse:
             yi = tf.reshape(yi, [1, fs[1]*fs[2], bs[1]*bs[2], 1])
-            yi = tf.nn.conv2d(yi, fuse_weight, strides=[1,1,1,1], padding='SAME')
+            yi = tf.nn.conv2d(yi, fuse_weight, strides=[
+                              1, 1, 1, 1], padding='SAME')
             yi = tf.reshape(yi, [1, fs[1], fs[2], bs[1], bs[2]])
             yi = tf.transpose(yi, [0, 2, 1, 4, 3])
             yi = tf.reshape(yi, [1, fs[1]*fs[2], bs[1]*bs[2], 1])
-            yi = tf.nn.conv2d(yi, fuse_weight, strides=[1,1,1,1], padding='SAME')
+            yi = tf.nn.conv2d(yi, fuse_weight, strides=[
+                              1, 1, 1, 1], padding='SAME')
             yi = tf.reshape(yi, [1, fs[2], fs[1], bs[2], bs[1]])
             yi = tf.transpose(yi, [0, 2, 1, 4, 3])
         yi = tf.reshape(yi, [1, fs[1], fs[2], bs[1]*bs[2]])
-  
+
         # softmax to match
-        yi *=  mm  # mask
+        yi *= mm  # mask
         yi = tf.nn.softmax(yi*scale, 3)
-        yi *=  mm  # mask
-  
+        yi *= mm  # mask
+
         offset = tf.math.argmax(yi, axis=3, output_type=tf.int32)
         offset = tf.stack([offset // fs[2], offset % fs[2]], axis=-1)
         # deconv for patch pasting
         # 3.1 paste center
         wi_center = raw_wi[0]
-        yi = tf.nn.conv2d_transpose(yi, wi_center, tf.concat([[1], raw_fs[1:]], axis=0), strides=[1,rate,rate,1]) / 4.
+        yi = tf.nn.conv2d_transpose(yi, wi_center, tf.concat(
+            [[1], raw_fs[1:]], axis=0), strides=[1, rate, rate, 1]) / 4.
         y.append(yi)
         offsets.append(offset)
     y = tf.concat(y, axis=0)
@@ -206,8 +210,10 @@ def contextual_attention(f, b, mask=None, ksize=3, stride=1, rate=1, fuse_k=3, s
     offsets = tf.concat(offsets, axis=0)
     offsets.set_shape(int_bs[:3] + [2])
     # case1: visualize optical flow: minus current position
-    h_add = tf.tile(tf.reshape(tf.range(bs[1]), [1, bs[1], 1, 1]), [bs[0], 1, bs[2], 1])
-    w_add = tf.tile(tf.reshape(tf.range(bs[2]), [1, 1, bs[2], 1]), [bs[0], bs[1], 1, 1])
+    h_add = tf.tile(tf.reshape(tf.range(bs[1]), [1, bs[1], 1, 1]), [
+                    bs[0], 1, bs[2], 1])
+    w_add = tf.tile(tf.reshape(tf.range(bs[2]), [1, 1, bs[2], 1]), [
+                    bs[0], bs[1], 1, 1])
     offsets = offsets - tf.concat([h_add, w_add], axis=3)
     # to flow image
     flow = flow_to_image_tf(offsets)
@@ -217,22 +223,8 @@ def contextual_attention(f, b, mask=None, ksize=3, stride=1, rate=1, fuse_k=3, s
         flow = resize(flow, scale=rate, func='bilinear')
     return y, flow
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax):
-=======
 
 def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
->>>>>>> Stashed changes
-=======
-
-def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
->>>>>>> Stashed changes
-=======
-
-def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
->>>>>>> Stashed changes
     """
 
     Returns:
@@ -242,23 +234,6 @@ def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
     img_shape = FLAGS.img_shapes
     img_height = img_shape[0]
     img_width = img_shape[1]
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    vert_scaling_factor = 800 / img_height
-    hor_scaling_factor = 800 / img_width
-
-    return (
-        xmin * hor_scaling_factor,
-        ymin * vert_scaling_factor,
-        (xmax - xmin) * hor_scaling_factor,
-        (ymax - ymin) * vert_scaling_factor
-    )
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 
     vert_scaling_factor = img_height / oheight
@@ -271,7 +246,6 @@ def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
 
     return (t, l, h, w)
 
->>>>>>> Stashed changes
 
 def random_bbox(FLAGS):
     """Generate a random tlhw.
@@ -293,6 +267,7 @@ def random_bbox(FLAGS):
     w = tf.constant(FLAGS.width)
     return (t, l, h, w)
 
+
 def bbox2mask(FLAGS, bbox, name='mask'):
     """Generate mask tensor from bbox.
 
@@ -305,10 +280,20 @@ def bbox2mask(FLAGS, bbox, name='mask'):
     """
     def npmask(bbox, height, width, delta_h, delta_w):
         mask = np.zeros((1, height, width, 1), np.float32)
-        h = np.random.randint(delta_h//2+1)
-        w = np.random.randint(delta_w//2+1)
-        mask[:, bbox[0]+h:bbox[0]+bbox[2]-h,
-             bbox[1]+w:bbox[1]+bbox[3]-w, :] = 1.
+        mask_test = np.zeros((height, width), np.float32)
+
+        # h = np.random.randint(delta_h//2+1)
+        # w = np.random.randint(delta_w//2+1)
+        # mask[:, int(bbox[0]+h):int(bbox[0]+bbox[2]-h),
+        #      int(bbox[1]+w):int(bbox[1]+bbox[3]-w), :] = 1.
+        mask[:, int(bbox[0]):int(bbox[0]+bbox[2]),
+             int(bbox[1]): int(bbox[1]+bbox[3]), :] = 1.
+
+        mask_test[int(bbox[0]): int(bbox[0]+bbox[2]),
+                  int(bbox[1]): int(bbox[1]+bbox[3])] = 1.
+
+        #print(mask_test)
+
         return mask
     img_shape = FLAGS.img_shapes
     height = img_shape[0]
@@ -321,6 +306,7 @@ def bbox2mask(FLAGS, bbox, name='mask'):
     mask.set_shape([1] + [height, width] + [1])
     return mask
 
+
 def brush_stroke_mask(FLAGS, name='mask'):
     """Generate mask tensor from bbox.
 
@@ -329,15 +315,16 @@ def brush_stroke_mask(FLAGS, name='mask'):
 
     """
 
-    #Εδώ έβαλα μικρότερα τα max_width και min_width γιατί οι εικόνες 
-    #όταν το τρέχω με 64X64Χ3 είναι πολύ μικρές για μία τέτοια μάσκα.
+    # Εδώ έβαλα μικρότερα τα max_width και min_width γιατί οι εικόνες
+    # όταν το τρέχω με 64X64Χ3 είναι πολύ μικρές για μία τέτοια μάσκα.
 
     min_num_vertex = 4
     max_num_vertex = 12
     mean_angle = 2*math.pi / 5
     angle_range = 2*math.pi / 15
-    min_width = 5                     #Original 12
-    max_width = 18                    #Original 40
+    min_width = 5  # Original 12
+    max_width = 18  # Original 40
+
     def generate_mask(H, W):
         average_radius = math.sqrt(H*H+W*W) / 8
         mask = Image.new('L', (W, H), 0)
@@ -350,15 +337,18 @@ def brush_stroke_mask(FLAGS, name='mask'):
             vertex = []
             for i in range(num_vertex):
                 if i % 2 == 0:
-                    angles.append(2*math.pi - np.random.uniform(angle_min, angle_max))
+                    angles.append(
+                        2*math.pi - np.random.uniform(angle_min, angle_max))
                 else:
                     angles.append(np.random.uniform(angle_min, angle_max))
 
             h, w = mask.size
-            vertex.append((int(np.random.randint(0, w)), int(np.random.randint(0, h))))
+            vertex.append((int(np.random.randint(0, w)),
+                           int(np.random.randint(0, h))))
             for i in range(num_vertex):
                 r = np.clip(
-                    np.random.normal(loc=average_radius, scale=average_radius//2),
+                    np.random.normal(loc=average_radius,
+                                     scale=average_radius//2),
                     0, 2*average_radius)
                 new_x = np.clip(vertex[-1][0] + r * math.cos(angles[i]), 0, w)
                 new_y = np.clip(vertex[-1][1] + r * math.sin(angles[i]), 0, h)
@@ -392,6 +382,7 @@ def brush_stroke_mask(FLAGS, name='mask'):
     mask.set_shape([1] + [height, width] + [1])
     return mask
 
+
 def local_patch(x, bbox):
     """Crop local patch according to bbox.
 
@@ -406,6 +397,7 @@ def local_patch(x, bbox):
     x = tf.image.crop_to_bounding_box(x, bbox[0], bbox[1], bbox[2], bbox[3])
     return x
 
+
 def resize_mask_like(mask, x):
     """Resize mask like shape of x.
 
@@ -417,25 +409,27 @@ def resize_mask_like(mask, x):
         tf.Tensor: resized mask
 
     """
-    to_shape=x.get_shape().as_list()[1:3]
-    #align_corners=align_corners???
+    to_shape = x.get_shape().as_list()[1:3]
+    # align_corners=align_corners???
     x = tf.image.resize(mask, [to_shape[0], to_shape[1]], method='nearest')
 
     return x
 
-def resize(x, scale=2, to_shape=None, align_corners=True, dynamic=False,func='nearest', name='resize'):
+
+def resize(x, scale=2, to_shape=None, align_corners=True, dynamic=False, func='nearest', name='resize'):
     if dynamic:
         xs = tf.cast(tf.shape(x), tf.float32)
         new_xs = [tf.cast(xs[1]*scale, tf.int32),
                   tf.cast(xs[2]*scale, tf.int32)]
     else:
         xs = x.get_shape().as_list()
-        new_xs = [int(xs[1]*scale), int(xs[2]*scale)]  
+        new_xs = [int(xs[1]*scale), int(xs[2]*scale)]
     if to_shape is None:
         x = tf.image.resize(x, new_xs)
     else:
         x = tf.image.resize(x, [to_shape[0], to_shape[1]], method=func)
     return x
+
 
 def make_color_wheel():
     RY, YG, GC, CB, BM, MR = (15, 6, 4, 11, 13, 6)
@@ -447,27 +441,33 @@ def make_color_wheel():
     colorwheel[0:RY, 1] = np.transpose(np.floor(255*np.arange(0, RY) / RY))
     col += RY
     # YG
-    colorwheel[col:col+YG, 0] = 255 - np.transpose(np.floor(255*np.arange(0, YG) / YG))
+    colorwheel[col:col+YG, 0] = 255 - \
+        np.transpose(np.floor(255*np.arange(0, YG) / YG))
     colorwheel[col:col+YG, 1] = 255
     col += YG
     # GC
     colorwheel[col:col+GC, 1] = 255
-    colorwheel[col:col+GC, 2] = np.transpose(np.floor(255*np.arange(0, GC) / GC))
+    colorwheel[col:col+GC,
+               2] = np.transpose(np.floor(255*np.arange(0, GC) / GC))
     col += GC
     # CB
-    colorwheel[col:col+CB, 1] = 255 - np.transpose(np.floor(255*np.arange(0, CB) / CB))
+    colorwheel[col:col+CB, 1] = 255 - \
+        np.transpose(np.floor(255*np.arange(0, CB) / CB))
     colorwheel[col:col+CB, 2] = 255
     col += CB
     # BM
     colorwheel[col:col+BM, 2] = 255
-    colorwheel[col:col+BM, 0] = np.transpose(np.floor(255*np.arange(0, BM) / BM))
+    colorwheel[col:col+BM,
+               0] = np.transpose(np.floor(255*np.arange(0, BM) / BM))
     col += + BM
     # MR
-    colorwheel[col:col+MR, 2] = 255 - np.transpose(np.floor(255 * np.arange(0, MR) / MR))
+    colorwheel[col:col+MR, 2] = 255 - \
+        np.transpose(np.floor(255 * np.arange(0, MR) / MR))
     colorwheel[col:col+MR, 0] = 255
     return colorwheel
 
-def compute_color(u,v):
+
+def compute_color(u, v):
     h, w = u.shape
     img = np.zeros([h, w, 3])
     nanIdx = np.isnan(u) | np.isnan(v)
@@ -483,7 +483,7 @@ def compute_color(u,v):
     k1 = k0 + 1
     k1[k1 == ncols+1] = 1
     f = fk - k0
-    for i in range(np.size(colorwheel,1)):
+    for i in range(np.size(colorwheel, 1)):
         tmp = colorwheel[:, i]
         col0 = tmp[k0-1] / 255
         col1 = tmp[k1-1] / 255
@@ -494,6 +494,7 @@ def compute_color(u,v):
         col[notidx] *= 0.75
         img[:, :, i] = np.uint8(np.floor(255 * col*(1-nanIdx)))
     return img
+
 
 def flow_to_image(flow):
     """Transfer flow map to image.
@@ -523,6 +524,7 @@ def flow_to_image(flow):
         out.append(img)
     return np.float32(np.uint8(out))
 
+
 @tf.function
 def flow_to_image_tf(flow, name='flow_to_image'):
     """Tensorflow ops for computing flow to image.
@@ -551,14 +553,12 @@ class ResizedDataReader():
         self.headers = self.lines[0].split(',')
         self.data = [
             [
-<<<<<<< Updated upstream
-                row_elems[0], # image_id
-                int(row_elems[1]), # mask_num
-                max(0, int(row_elems[2])), # xmin
-                max(0, int(row_elems[3])), # ymin
-                min(800, int(row_elems[4])), # xmax
-                min(800, int(row_elems[5])) # ymax
-=======
+                # row_elems[0],  # image_id
+                # int(row_elems[1]),  # mask_num
+                # max(0, int(row_elems[2])),  # xmin
+                # max(0, int(row_elems[3])),  # ymin
+                # min(800, int(row_elems[4])),  # xmax
+                # min(800, int(row_elems[5]))  # ymax
                 row_elems[0],  # image_id
                 int(row_elems[1]),  # mask_num
                 int(row_elems[2]),  # image_height
@@ -567,13 +567,6 @@ class ResizedDataReader():
                 max(0, int(row_elems[11])),  # ymin
                 min(800, int(row_elems[12])),  # xmax
                 min(800, int(row_elems[17]))  # ymax
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             ] for row_elems in [line.split(',') for line in self.lines[1:]]
         ]
         fp.close()
@@ -588,7 +581,8 @@ class ResizedDataReader():
         :param mask_num:
         :return:
         """
-        rows = [row for row in self.data if row[0] == image_id and row[1] == mask_num]
+        rows = [row for row in self.data if row[0]
+                == image_id and row[1] == mask_num]
         if len(rows) != 1:
             return [-1, -1, -1, -1]
         return rows[0][4:]
@@ -603,40 +597,7 @@ class ResizedDataReader():
         #print("mask num check:", mask_num)
         rows = [row for row in self.data if row[0] == image_id and row[1] == 1]
 
+        #print("row:", rows)
         if len(rows) != 1:
             return [-1, -1, -1, -1]
-<<<<<<< Updated upstream
-=======
-        return rows[0][4:]
-
-    def get_image_hw(self, image_id) -> List[int]:
-        """
-        Returns [xmin, ymin, xmax, ymax], all values will be -1 if mask info not found
-        :param image_id:
-        :param mask_num:
-        :return:
-        """
-        #print("mask num check:", mask_num)
-        rows = [row for row in self.data if row[0] == image_id and row[1] == 1]
-
-        if len(rows) != 1:
-            return [-1, -1, -1, -1]
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
-        return rows[0][4:]
-
-    def get_image_hw(self, image_id) -> List[int]:
-        """
-        Returns [xmin, ymin, xmax, ymax], all values will be -1 if mask info not found
-        :param image_id:
-        :param mask_num:
-        :return:
-        """
-        #print("mask num check:", mask_num)
-        rows = [row for row in self.data if row[0] == image_id and row[1] == 1]
-
-        if len(rows) != 1:
-            return [-1, -1, -1, -1]
->>>>>>> Stashed changes
         return rows[0][2:4]
