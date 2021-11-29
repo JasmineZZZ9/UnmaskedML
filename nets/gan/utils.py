@@ -285,7 +285,7 @@ def bbox2mask(FLAGS, bbox, name='mask'):
     """
     def npmask(bbox, height, width, delta_h, delta_w):
         mask = np.zeros((1, height, width, 1), np.float32)
-        mask_test = np.zeros(height, width), np.float32)
+        mask_test = np.zeros((height, width), np.float32)
 
         # h = np.random.randint(delta_h//2+1)
         # w = np.random.randint(delta_w//2+1)
@@ -295,14 +295,15 @@ def bbox2mask(FLAGS, bbox, name='mask'):
              int(bbox[1]): int(bbox[1]+bbox[3]), :] = 1.
 
         mask_test[int(bbox[0]): int(bbox[0]+bbox[2]),
-             int(bbox[1]): int(bbox[1]+bbox[3])]= 1.
+                  int(bbox[1]): int(bbox[1]+bbox[3])] = 1.
 
+        print(mask_test)
 
         return mask
-    img_shape= FLAGS.img_shapes
-    height= img_shape[0]
-    width= img_shape[1]
-    mask= tf.numpy_function(
+    img_shape = FLAGS.img_shapes
+    height = img_shape[0]
+    width = img_shape[1]
+    mask = tf.numpy_function(
         npmask,
         [bbox, height, width,
          FLAGS.max_delta_height, FLAGS.max_delta_width],
@@ -311,7 +312,7 @@ def bbox2mask(FLAGS, bbox, name='mask'):
     return mask
 
 
-def brush_stroke_mask(FLAGS, name = 'mask'):
+def brush_stroke_mask(FLAGS, name='mask'):
     """Generate mask tensor from bbox.
 
     Returns:
@@ -322,23 +323,23 @@ def brush_stroke_mask(FLAGS, name = 'mask'):
     # Εδώ έβαλα μικρότερα τα max_width και min_width γιατί οι εικόνες
     # όταν το τρέχω με 64X64Χ3 είναι πολύ μικρές για μία τέτοια μάσκα.
 
-    min_num_vertex=4
-    max_num_vertex=12
-    mean_angle=2*math.pi / 5
-    angle_range=2*math.pi / 15
-    min_width=5  # Original 12
-    max_width=18  # Original 40
+    min_num_vertex = 4
+    max_num_vertex = 12
+    mean_angle = 2*math.pi / 5
+    angle_range = 2*math.pi / 15
+    min_width = 5  # Original 12
+    max_width = 18  # Original 40
 
     def generate_mask(H, W):
-        average_radius=math.sqrt(H*H+W*W) / 8
-        mask=Image.new('L', (W, H), 0)
+        average_radius = math.sqrt(H*H+W*W) / 8
+        mask = Image.new('L', (W, H), 0)
 
         for _ in range(np.random.randint(1, 4)):
-            num_vertex=np.random.randint(min_num_vertex, max_num_vertex)
-            angle_min=mean_angle - np.random.uniform(0, angle_range)
-            angle_max=mean_angle + np.random.uniform(0, angle_range)
-            angles=[]
-            vertex=[]
+            num_vertex = np.random.randint(min_num_vertex, max_num_vertex)
+            angle_min = mean_angle - np.random.uniform(0, angle_range)
+            angle_max = mean_angle + np.random.uniform(0, angle_range)
+            angles = []
+            vertex = []
             for i in range(num_vertex):
                 if i % 2 == 0:
                     angles.append(
@@ -346,11 +347,11 @@ def brush_stroke_mask(FLAGS, name = 'mask'):
                 else:
                     angles.append(np.random.uniform(angle_min, angle_max))
 
-            h, w=mask.size
+            h, w = mask.size
             vertex.append((int(np.random.randint(0, w)),
                            int(np.random.randint(0, h))))
             for i in range(num_vertex):
-                r=np.clip(
+                r = np.clip(
                     np.random.normal(loc=average_radius,
                                      scale=average_radius//2),
                     0, 2*average_radius)
