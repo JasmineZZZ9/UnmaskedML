@@ -72,45 +72,8 @@ train_dataset = [load_image_train(training_dirs, x)
 test_dataset = [load_image_train(testing_dirs, x)
                 for x in test_dataset]
 
-# Training data
-# train_dataset = tf.data.Dataset.list_files(
-#     training_dirs+'/*.jpg', shuffle=False)
-# train_dataset = tf.data.Dataset.from_tensor_slices(train_dataset)
-
-# train_dataset = train_dataset.take(100000)
-# # train_dataset = train_dataset.map(load_image_train,
-# #                                   num_parallel_calls=tf.data.experimental.AUTOTUNE)
-# train_dataset = train_dataset.cache("./CACHED_TRAIN_MULTI.tmp")
-# train_dataset = train_dataset.batch(BATCH_SIZE)
-# train_dataset = train_dataset.prefetch(
-#     buffer_size=tf.data.experimental.AUTOTUNE)
-
-# Testing data
-# test_dataset_filenames = tf.data.Dataset.list_files(
-#     testing_dirs + '/*.jpg', shuffle=False)
-
-# test_dataset_filenames = tf.data.Dataset.from_tensor_slices(test_dataset)
-
-# test_dataset = test_dataset_filenames.map(load_image_train)
-
-# exit()
-# test_dataset = test_dataset.batch(BATCH_SIZE)
-# test_dataset = test_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-
-# # train_dataset_filenames = list(train_dataset_filenames.as_numpy_iterator())
-# # test_dataset_filenames = list(test_dataset_filenames.as_numpy_iterator())
-
-# # # Labels
-# # train_dataset_filenames = [x.decode("utf-8") for x in train_dataset_filenames]
-# # train_dataset_filenames = [
-# #     x.replace("./rs_truth_training/", "") for x in train_dataset_filenames]
-
-# # test_dataset_filenames = [x.decode("utf-8") for x in test_dataset_filenames]
-# # test_dataset_filenames = [
-# #     x.replace("./rs_masked_test/", "") for x in test_dataset_filenames]
 
 # loss
-
 
 def generator_loss(input, stage1, stage2, neg):
     gen_l1_loss = tf.reduce_mean(tf.abs(input - stage1))
@@ -239,7 +202,7 @@ def fit(train_ds, epochs, test_ds):
         gt = pd.DataFrame(dict1)
         gt.to_csv(f'./CSV_loss/loss_{check_step}.csv', index=False)
         index = 0
-        for input in [test_ds[2]]:
+        for input in test_ds:
             # print(input)
             input_filename = input["path"]
             # TODO: The create_mask part needs a mask having the same shape as our mask"
@@ -284,7 +247,7 @@ print("Continue Training from epoch ", np.int(checkpoint.step))
 
 # FIT
 # EPOCHS = 200 - np.int(checkpoint.step)
-EPOCHS = 1
+EPOCHS = 200
 
 # fit(train_dataset.take(20), EPOCHS, test_dataset)
-fit(train_dataset[:1], EPOCHS, test_dataset)
+fit(train_dataset, EPOCHS, test_dataset)

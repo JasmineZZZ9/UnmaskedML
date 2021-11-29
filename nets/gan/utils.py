@@ -242,6 +242,9 @@ def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax):
     vert_scaling_factor = img_height/800
     hor_scaling_factor = img_width/800
 
+    # vert_scaling_factor = vert_scaling_factor * 800/1024
+    # hor_scaling_factor = hor_scaling_factor * 800/1024
+
     t = ymin * vert_scaling_factor
     l = xmin * hor_scaling_factor
     h = (ymax - ymin) * vert_scaling_factor
