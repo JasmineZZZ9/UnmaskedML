@@ -232,11 +232,17 @@ def fit(train_ds, epochs, test_ds):
                 oheight, owidth = reader.get_image_hw(image_id)
                 mask = create_mask(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 
                 total_gen_loss, gen_hinge_loss, gen_l1_loss, dis_loss = train_step(input_image, mask)
+=======
+
+                total_gen_loss, gen_hinge_loss, gen_l1_loss, dis_loss = train_step(
+                    input_image, mask)
+>>>>>>> Stashed changes
                 g_total_b += total_gen_loss
                 g_hinge_b += gen_hinge_loss
                 g_l1_b += gen_l1_loss
@@ -265,6 +271,7 @@ def fit(train_ds, epochs, test_ds):
             # TODO: The create_mask part needs a mask having the same shape as our mask"
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             image_id = input_filename.replace('.jpg', '')
             num_masks = reader.get_num_masks(image_id)
             for mask_num in range(1, num_masks + 1):  # mask_num starts at 1 not 0, so offset by 1
@@ -273,6 +280,8 @@ def fit(train_ds, epochs, test_ds):
 
                 generate_images(input, generator=generator, num_epoch=check_step, mask=mask)
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
             image_id = input_filename.replace('_surgical.jpg', '.jpg')

@@ -36,6 +36,7 @@ def CSV_reader(input):
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def create_mask(FLAGS, xmin, ymin, xmax, ymax):
   bbox = scaled_bbox(FLAGS, xmin, ymin, xmax, ymax)
   regular_mask = bbox2mask(FLAGS, bbox, name='mask_c')
@@ -50,6 +51,8 @@ def create_mask(FLAGS, xmin, ymin, xmax, ymax):
   )
   return mask
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 def create_mask(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
@@ -216,7 +219,12 @@ def contextual_attention(f, b, mask=None, ksize=3, stride=1, rate=1, fuse_k=3, s
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax):
+=======
+
+def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
+>>>>>>> Stashed changes
 =======
 
 def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
@@ -236,6 +244,7 @@ def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
     img_width = img_shape[1]
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     vert_scaling_factor = 800 / img_height
     hor_scaling_factor = 800 / img_width
 
@@ -246,6 +255,8 @@ def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
         (ymax - ymin) * vert_scaling_factor
     )
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 
@@ -557,6 +568,9 @@ class ResizedDataReader():
                 min(800, int(row_elems[12])),  # xmax
                 min(800, int(row_elems[17]))  # ymax
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -592,6 +606,23 @@ class ResizedDataReader():
         if len(rows) != 1:
             return [-1, -1, -1, -1]
 <<<<<<< Updated upstream
+=======
+        return rows[0][4:]
+
+    def get_image_hw(self, image_id) -> List[int]:
+        """
+        Returns [xmin, ymin, xmax, ymax], all values will be -1 if mask info not found
+        :param image_id:
+        :param mask_num:
+        :return:
+        """
+        #print("mask num check:", mask_num)
+        rows = [row for row in self.data if row[0] == image_id and row[1] == 1]
+
+        if len(rows) != 1:
+            return [-1, -1, -1, -1]
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
 =======
         return rows[0][4:]
 
