@@ -1,3 +1,4 @@
+img,mask_num,img_height,img_width,face_xtl,face_ytl,face_xbr,face_ybr,mask_xtl,mask_ytl,mask_xtm,mask_ytm,mask_xtr,mask_ytr,mask_xbr,mask_ybr,mask_xbm,mask_ybm,mask_xbl,mask_ybl
 000004f4400f6ec5.jpg,1,685,1024,597,182,726,311,586,249,660,244,699,263,691,289,649,309,593,295
 0000271195f2c007.jpg,1,768,1024,384,348,705,669,364,526,554,504,647,563,616,637,519,686,399,654
 00006c07d2b033d1.jpg,1,1024,1024,339,268,468,397,328,317,417,326,472,367,451,406,385,417,325,377
