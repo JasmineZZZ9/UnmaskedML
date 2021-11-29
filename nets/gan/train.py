@@ -239,22 +239,19 @@ def fit(train_ds, epochs, test_ds):
         gt = pd.DataFrame(dict1)
         gt.to_csv(f'./CSV_loss/loss_{check_step}.csv', index=False)
         index = 0
-        for input in [test_ds[0]]:
-            print(input)
+        for input in [test_ds[2]]:
+            # print(input)
             input_filename = input["path"]
             # TODO: The create_mask part needs a mask having the same shape as our mask"
             image_id = input_filename.replace('_surgical.jpg', '')
-            print("Image ID: " + str(image_id))
+            # print("Image ID: " + str(image_id))
             num_masks = reader.get_num_masks(image_id)
             # mask_num starts at 1 not 0, so offset by 1
-            print("Num Masks: " + str(num_masks))
+            # print("Num Masks: " + str(num_masks))
             index += 1
             for mask_num in range(1, num_masks + 1):
-                print(
-                    "REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE3")
-
                 xmin, ymin, xmax, ymax = reader.get_mask_coords(
-                    image_id, num_masks)
+                    image_id, mask_num)
                 print("xmin: " + str(xmin) + " ymin: " + str(ymin) +
                       " xmax: " + str(xmax) + " ymax: " + str(ymax))
                 mask = create_mask(FLAGS, xmin, ymin, xmax, ymax)

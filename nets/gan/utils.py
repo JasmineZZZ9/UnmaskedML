@@ -60,7 +60,7 @@ def generate_images(input, generator, mask, training=True, url=False, num_epoch=
     # batch_incomplete = original+mask
     # stage2 = prediction/inpainted image
     # mask = create_mask(FLAGS)
-    print("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE2")
+    # print("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE2")
     # tf.print(mask, summarize=-1)
 
     batch_incomplete = input*(1.-mask)
@@ -87,7 +87,8 @@ def generate_images(input, generator, mask, training=True, url=False, num_epoch=
         if training:
             # print(
             #     "REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
-            plt.savefig(f"./images_examples/test_example_{num_epoch}.png")
+            plt.savefig(f"./images_examples/test_example_{num_epoch}__" +
+                        datetime.datetime.now().strftime("%H%M%S%f") + ".png")
         else:
             plt.savefig(
                 f"./images_examples/infer_test_example_{num_epoch}__" + datetime.datetime.now().strftime("%H%M%S%f") + ".png")
@@ -234,10 +235,10 @@ def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax):
     img_shape = FLAGS.img_shapes
     img_height = img_shape[0]
     img_width = img_shape[1]
-    print("xmin: " + str(xmin))
-    print("ymin: " + str(ymin))
-    print("xmax: " + str(xmax))
-    print("ymax: " + str(ymax))
+    # print("xmin: " + str(xmin))
+    # print("ymin: " + str(ymin))
+    # print("xmax: " + str(xmax))
+    # print("ymax: " + str(ymax))
     vert_scaling_factor = img_height/800
     hor_scaling_factor = img_width/800
 
@@ -245,10 +246,10 @@ def scaled_bbox(FLAGS, xmin, ymin, xmax, ymax):
     l = xmin * hor_scaling_factor
     h = (ymax - ymin) * vert_scaling_factor
     w = (xmax - xmin) * hor_scaling_factor
-    print("t: " + str(t))
-    print("l: " + str(l))
-    print("h: " + str(h))
-    print("w: " + str(w))
+    # print("t: " + str(t))
+    # print("l: " + str(l))
+    # print("h: " + str(h))
+    # print("w: " + str(w))
     return (t, l, h, w)
 
 
@@ -297,7 +298,7 @@ def bbox2mask(FLAGS, bbox, name='mask'):
         mask_test[int(bbox[0]): int(bbox[0]+bbox[2]),
                   int(bbox[1]): int(bbox[1]+bbox[3])] = 1.
 
-        print(mask_test)
+        # print(mask_test)
 
         return mask
     img_shape = FLAGS.img_shapes
