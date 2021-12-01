@@ -10,7 +10,7 @@ from config import *
 from utils import *
 
 from utils import ResizedDataReader
-
+SIZE = 256
 tf.random.set_seed(20)
 tf.config.run_functions_eagerly(True)
 
@@ -45,7 +45,7 @@ def load_image_train(dir, img):
     img = resize_pipeline(img, IMG_HEIGHT, IMG_WIDTH)
     return {
         "path": path,
-        "img": normalize(img)
+        "img": tf.expand_dims(normalize(img), axis=0)
     }
 
 
@@ -105,7 +105,7 @@ def train_step(input, mask):
 
         batch_complete = stage2*mask + batch_incomplete*(1.-mask)
         batch_pos_neg = tf.concat(
-            [tf.reshape(input["img"], [1, 64, 64, 3]), batch_complete], axis=0)
+            [tf.reshape(input["img"], [1, SIZE, SIZE, 3]), batch_complete], axis=0)
         if FLAGS.gan_with_mask:
             batch_pos_neg = tf.concat([batch_pos_neg, tf.tile(
                 mask, [FLAGS.batch_size*2, 1, 1, 1])], axis=3)
@@ -152,6 +152,7 @@ def fit(train_ds, epochs, test_ds):
         g_total, g_hinge, g_l1, d = [], [], [], []
 
     for ep in trange(epochs):
+        print(ep)
         start = time.time()
 
         checkpoint.step.assign_add(1)
@@ -180,10 +181,10 @@ def fit(train_ds, epochs, test_ds):
                 oheight, owidth = reader.get_image_hw(image_id)
 
                 mask = create_mask(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth)
-                if mask.shape != (1, 64, 64, 1):
+                if mask.shape != (1, SIZE, SIZE, 1):
                     count += 1
                     continue
-                if input_image['img'].shape != (1, 64, 64, 3):
+                if input_image['img'].shape != (1, SIZE, SIZE, 3):
                     count += 1
                     continue
 
@@ -195,6 +196,7 @@ def fit(train_ds, epochs, test_ds):
                 d_b += dis_loss
                 count += 1  # verify
             index += 1
+
         g_total.append(g_total_b/count)
         g_hinge.append(g_hinge_b/count)
         g_l1.append(g_l1_b/count)
@@ -211,7 +213,9 @@ def fit(train_ds, epochs, test_ds):
         gt = pd.DataFrame(dict1)
         gt.to_csv(f'./CSV_loss/loss_{check_step}.csv', index=False)
         index = 0
-        for input in test_ds:
+        print("Losses calculated")
+        tmp = 0
+        for test_number, input in enumerate(test_ds):
             #print(input)
             input_filename = input["path"]
             # TODO: The create_mask part needs a mask having the same shape as our mask"
@@ -236,8 +240,11 @@ def fit(train_ds, epochs, test_ds):
 
                 #mask = create_mask(FLAGS, xmin, ymin, xmax, ymax)
                 mask = create_mask(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth)
-                generate_images(input["img"], generator=generator,
+                generate_images(test_number, input["img"], generator=generator,
                                 num_epoch=check_step, mask=mask)
+            tmp += 1
+            if tmp > 2:
+                break
 
         print("Epoch: ", check_step)
 

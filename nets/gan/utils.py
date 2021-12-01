@@ -56,7 +56,7 @@ def create_mask(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth):
     return mask
 
 
-def generate_images(input, generator, mask, training=True, url=False, num_epoch=0):
+def generate_images(test_number, input, generator, mask, training=True, url=False, num_epoch=0):
     # input = original
     # batch_incomplete = original+mask
     # stage2 = prediction/inpainted image
@@ -83,14 +83,18 @@ def generate_images(input, generator, mask, training=True, url=False, num_epoch=
             plt.setp(title_obj, color='y')  # set the color of title to red
             plt.axis('off')
             # getting the pixel values between [0, 1] to plot it.
-            plt.imshow(display_list[i]*0.5 + 0.5)
+            img = display_list[i]*0.5 + 0.5
+            if img.shape[0] == 1:
+                img = np.squeeze(img, axis=0)
+            plt.imshow(img)
         if training:
             # print(
             #     "REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
-            plt.savefig(f"./images_examples/test_example_{num_epoch}.png")
+            plt.savefig(f"./images_examples/epoch_{num_epoch}_image_{test_number}.png")
         else:
             plt.savefig(
                 f"./images_examples/infer_test_example_{num_epoch}__" + datetime.datetime.now().strftime("%H%M%S%f") + ".png")
+        plt.close()
     else:
         return batch_incomplete[0], batch_complete[0]
 

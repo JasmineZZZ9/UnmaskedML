@@ -1,5 +1,5 @@
 static_view_size: 30
-img_shapes: [64, 64, 3] #itan [256, 256, 3] 
+img_shapes: [256, 256, 3] #itan [256, 256, 3]
 height: 16              #otan allazo to megethos tis eikonas prepei na allazo kai to height kai width    
 width: 16               #giati ayta einai gia tin mask kai prepei na einai arketa mikroteri tis eikonas
 max_delta_height: 32
