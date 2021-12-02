@@ -1,122 +1,119 @@
-# import tensorflow as tf
-# import numpy as np
-
-# print(tf.add(1, 2))
-# print(tf.add([1, 2], [3, 4]))
-# print(tf.square(5))
-# print(tf.reduce_sum([1, 2, 3]))
-
-# print(tf.square(2) + tf.square(3))
-
-# x = tf.matmul([[1]], [[2, 3]])
-# print(x)
-# print(x.shape)
-# print(x.dtype)
-
-# print("=================================")
-
-# ndarray = np.ones([3, 3])
-
-# print("Tensorflow operations convert numpy arrays to Tensors automatically")
-# tensor = tf.multiply(ndarray, 42)
-# print(tensor)
-
-# print("And NumPy operations convert Tensors to numpy arrays automatically")
-# print(np.add(tensor, 1))
-
-# print("The .numpy() method explicitly converts a Tensor to a numpy array")
-# print(tensor.numpy())
-
-# print("=================================")
-
-# x = tf.random.uniform([3, 3])
-# print("Is there a GPU available: ")
-# print(tf.config.list_physical_devices("GPU"))
-
-# print("Is the Tensor on GPU #0: ")
-# print(x.device.endswith("GPU:0"))
-
-# import tempfile
-# ds_tensors = tf.data.Dataset.from_tensor_slices([1, 2, 3, 4, 5, 6])
-
-# # Create a CSV file
-# _, filename = tempfile.mkstemp()
-
-# with open(filename, 'w') as f:
-#     f.write("""Line 1
-# Line 2
-# Line 3
-#   """)
-
-# ds_file = tf.data.TextLineDataset(filename)
-
-# ds_tensors = ds_tensors.map(tf.square).shuffle(2).batch(2)
-
-# ds_file = ds_file.batch(2)
-
-# print('Elements of ds_tensors:')
-# for x in ds_tensors:
-#     print(x)
-
-# print('\nElements in ds_file:')
-# for x in ds_file:
-#     print(x)
 import tensorflow as tf
+import pandas as pd
+import time
+import os
+import numpy
 
-from tensorflow.keras import datasets, layers, models
-import matplotlib.pyplot as plt
+from tqdm import tqdm, trange
+from deepfill import *
+from config import *
+from utils import *
 
-(train_images, train_labels), (test_images,
-                               test_labels) = datasets.cifar10.load_data()
+from utils import ResizedDataReader
 
-# Normalize pixel values to be between 0 and 1
-train_images, test_images = train_images / 255.0, test_images / 255.0
+generator_optimizer = tf.keras.optimizers.Adam(1e-4, beta_1=0.5, beta_2=0.9)
+discriminator_optimizer = tf.keras.optimizers.SGD(learning_rate=1e-4)
 
-class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
-               'dog', 'frog', 'horse', 'ship', 'truck']
+FLAGS = Config('./inpaint.yml')
 
-plt.figure(figsize=(10, 10))
-for i in range(25):
-    plt.subplot(5, 5, i+1)
-    plt.xticks([])
-    plt.yticks([])
-    plt.grid(False)
-    plt.imshow(train_images[i])
-    # The CIFAR labels happen to be arrays,
-    # which is why you need the extra index
-    plt.xlabel(class_names[train_labels[i][0]])
-plt.show()
+generator = Generator()
+discriminator = Discriminator()
 
-model = models.Sequential()
-model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+def load(img):
+    img = tf.io.read_file(img)
+    img = tf.image.decode_jpeg(img)
+    return tf.cast(img, tf.float32)
 
-model.summary()
+def normalize(img):
+    return (img / 127.5) - 1.
 
-model.add(layers.Flatten())
-model.add(layers.Dense(64, activation='relu'))
-model.add(layers.Dense(10))
 
-model.summary()
+def load_image_train(dir, img):
+    path = img
+    img = load(dir + "/" + img)
+    img = resize_pipeline(img, IMG_HEIGHT, IMG_WIDTH)
+    return {
+        "path": path,
+        "img": tf.expand_dims(normalize(img), axis=0)
+    }
 
-model.compile(optimizer='adam',
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(
-                  from_logits=True),
-              metrics=['accuracy'])
+def resize_pipeline(img, height, width):
+    return tf.image.resize(img, [height, width],
+                           method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
-history = model.fit(train_images, train_labels, epochs=10,
-                    validation_data=(test_images, test_labels))
+testing_dirs = "./TEST"
 
-plt.plot(history.history['accuracy'], label='accuracy')
-plt.plot(history.history['val_accuracy'], label='val_accuracy')
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy')
-plt.ylim([0.5, 1])
-plt.legend(loc='lower right')
+# Get file names
+test_dataset = [i for i in os.listdir(
+    testing_dirs) if i.endswith(".jpg")]
 
-test_loss, test_acc = model.evaluate(test_images,  test_labels, verbose=2)
+# Get images
+test_dataset = [load_image_train(testing_dirs, x)
+                for x in test_dataset]
 
-print(test_acc)
+# test_dataset = tf.data.Dataset.list_files("../TEST/*.jpg")
+# test_dataset = test_dataset.map(load_image_train)
+# test_dataset = test_dataset.batch(FLAGS.batch_size)
+# test_dataset = test_dataset.prefetch(buffer_size = tf.data.experimental.AUTOTUNE)
+
+checkpoint_dir = "./training_checkpoints"
+checkpoint = tf.train.Checkpoint(step=tf.Variable(0),
+                                 generator_optimizer=generator_optimizer,
+                                 discriminator_optimizer=discriminator_optimizer,
+                                 generator=generator,
+                                 discriminator=discriminator)
+manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=3)
+"'need to change this'"
+checkpoint.restore(checkpoint_dir+'/'+'ckpt-19')
+step = np.int(checkpoint.step)
+print("Continue Testing from epoch ", step)
+
+#restore CSV
+#df_load = pd.read_csv(f'./CSV_loss/loss_{step}.csv', delimiter=',')
+#g_total = df_load['g_total'].values.tolist()
+#g_total = CSV_reader(g_total)
+#g_hinge = df_load['g_hinge'].values.tolist()
+#g_hinge = CSV_reader(g_hinge)
+#g_l1 = df_load['g_l1'].values.tolist()
+#g_l1 = CSV_reader(g_l1)
+#d = df_load['d'].values.tolist()
+#d = CSV_reader(d)
+#print(f'Loaded CSV for step: {step}')
+
+# for data in test_dataset.take(15):
+#   generate_images(data, generator, training=False, num_epoch=step)
+reader = ResizedDataReader()
+reader.read_all()
+
+index = 0
+tmp = 0
+for test_number, input in enumerate(test_dataset):
+    #print(input)
+    input_filename = input["path"]
+    # TODO: The create_mask part needs a mask having the same shape as our mask"
+    #image_id = input_filename.replace('_surgical.jpg', '')
+    image_id = input_filename.replace('_surgical.jpg', '.jpg')
+    #print("Image ID: " + str(image_id))
+    if reader.get_num_masks(image_id)==False:
+        continue
+    num_masks = reader.get_num_masks(image_id)
+    # mask_num starts at 1 not 0, so offset by 1
+    #print("Num Masks: " + str(num_masks))
+    index += 1
+    for mask_num in range(1, num_masks + 1):
+        if reader.get_mask_coords(image_id, num_masks) == False:
+            continue
+        if reader.get_image_hw(image_id) == False:
+            continue
+        xmin, ymin, xmax, ymax = reader.get_mask_coords(
+            image_id, num_masks)
+        oheight, owidth = reader.get_image_hw(image_id)
+
+        #mask = create_mask(FLAGS, xmin, ymin, xmax, ymax)
+        mask = create_mask(FLAGS, xmin, ymin, xmax, ymax, oheight, owidth)
+        generate_images(test_number, input["img"], generator=generator,
+                        num_epoch=step, mask=mask)
+    tmp += 1
+    if tmp > 2:
+        break
+#plot_history(g_total, g_hinge, g_l1, d, step, training=False)
