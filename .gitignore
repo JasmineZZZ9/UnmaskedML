@@ -1,3 +1,7 @@
 .idea
 *.zip
 *.tfrecord
+/nets/gan/training_checkpoints
+/nets/gan/images_examples
+/nets/gan/images_loss
+/nets/gan/CSV_loss
