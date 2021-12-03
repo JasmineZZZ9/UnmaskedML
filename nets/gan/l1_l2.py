@@ -75,18 +75,13 @@ def generate_images_test(test_number, input, original_input,loss1,loss2, generat
         #fig, ax = plt.subplots(1, 3)
         for i in range(5):
             if i == 2 or i ==3:
-                #plt.subplot(1, 4, i+1)
-                #title_obj = plt.title(title[i])
-                #plt.title(title[i], color='black', fontsize=25)  # set the color of title to red
-                #plt.axis('off')
-                # getting the pixel values between [0, 1] to plot it.
-                #plt.imshow(display_list[i]*0.5 + 0.5)
+                
                 img = display_list[i] * 0.5 + 0.5
                 if img.shape[0] == 1:
                     img = np.squeeze(img, axis=0)
 
                 x.append(np.array(img))
-                #plt.imshow(img)
+
             if i == 4:
 
                 loss_l1 = L1(x[0], x[1])
@@ -95,17 +90,6 @@ def generate_images_test(test_number, input, original_input,loss1,loss2, generat
                 loss_l2 = L2(x[0], x[1])
                 loss2.append((loss_l2))
 
-
-        if training:
-            # print(
-            #     "REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
-            #plt.savefig(f"./images_examples/test_example_{num_epoch}.png")
-            plt.savefig(f"./images_examples/epoch_{num_epoch}_image_{test_number}.png")
-
-        else:
-            plt.savefig(
-                f"./evaluation_examples/evaluation_example_{num_epoch}__" + datetime.datetime.now().strftime("%H%M%S%f") + ".png")
-        plt.close()
         return loss1, loss2
     else:
         return batch_incomplete[0], batch_complete[0]
@@ -182,6 +166,8 @@ for test_number, input in enumerate(test_dataset):
 loss1 = np.mean(loss1)
 loss2 = np.mean(loss2)
 
+print("-----------------------------------------------------------------------")
 print("The L1 loss: ", loss1)
 print("The L2 loss:", loss2)
-#plot_history(g_total, g_hinge, g_l1, d, step, training=False)
+print("-----------------------------------------------------------------------")
+      
