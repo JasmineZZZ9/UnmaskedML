@@ -118,7 +118,7 @@ checkpoint = tf.train.Checkpoint(step=tf.Variable(0),
                                  discriminator=discriminator)
 manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=3)
 "'need to change this'"
-checkpoint.restore(checkpoint_dir+'/'+'ckpt-19')
+checkpoint.restore(checkpoint_dir+'/'+'ckpt-30')
 step = np.int(checkpoint.step)
 print("Continue Testing from epoch ", step)
 
