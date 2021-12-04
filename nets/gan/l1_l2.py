@@ -161,8 +161,7 @@ for test_number, input in enumerate(test_dataset):
         loss1, loss2 = generate_images_test(test_number, input["img"], original_image["img"],loss1,loss2, generator=generator,
                         num_epoch=step, mask=mask)
     tmp += 1
-    if tmp > 2:
-        break
+
 loss1 = np.mean(loss1)
 loss2 = np.mean(loss2)
 
